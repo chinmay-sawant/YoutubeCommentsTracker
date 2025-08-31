@@ -5,13 +5,16 @@ A Google Chrome extension that displays live-updating comments from a specific u
 
 ## Features
 
+- **YouTube API Integration**: Fast, reliable comment fetching via YouTube Data API v3
+- **Automatic Video ID Detection**: Automatically extracts video ID from current YouTube page
 - **Real-time Comment Monitoring**: Automatically detects new comments as they load on YouTube videos
 - **User-specific Filtering**: Track comments from any YouTube username or channel
 - **Automatic Timestamp Detection**: Finds comments with time references like "0:19", "1:23", "10:45"
 - **Dual Mode Operation**: Track user comments, timestamp comments, or both simultaneously
 - **Smart Positioning**: Overlay positioned relative to video player (bottom-right corner)
 - **Enhanced Transparency**: More transparent background for better video viewing
-- **Improved Comment Loading**: Retry system with better delay handling
+- **Fallback System**: DOM scraping when API is unavailable
+- **Improved Comment Loading**: Retry system with better delay handling and pagination
 - **Draggable Interface**: Move the comment feed anywhere on the screen
 - **Live Notifications**: Get notified when new matching comments appear
 - **Auto-scroll**: Newest comments appear at the top of the feed
@@ -22,15 +25,30 @@ A Google Chrome extension that displays live-updating comments from a specific u
 
 ### Method 1: Load as Unpacked Extension (Development)
 
-1. Download or clone this repository to your local machine
-2. Open Google Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" in the top-right corner
-4. Click "Load unpacked" and select the extension directory
-5. The extension should now appear in your extensions list
+1. **Get YouTube API Key** (Optional but recommended):
+   - Follow the instructions in `API_SETUP.md` to get a YouTube Data API key
+   - Replace `YOUR_API_KEY_HERE` in `background.js` with your actual API key
+   - This enables reliable comment fetching via the YouTube API
+
+2. **Load Extension:**
+   - Download or clone this repository to your local machine
+   - Open Google Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode" in the top-right corner
+   - Click "Load unpacked" and select the extension directory
+   - The extension should now appear in your extensions list
 
 ### Method 2: Install from Chrome Web Store (When Published)
 
 *Coming soon - extension will be published to Chrome Web Store*
+
+### API vs DOM Scraping
+
+The extension works in two modes:
+
+- **API Mode** (Recommended): Uses YouTube Data API for reliable, fast comment fetching
+- **DOM Scraping Mode** (Fallback): Scrapes comments from the page when API is unavailable
+
+Without an API key, the extension automatically falls back to DOM scraping, which still works but may be less reliable.
 
 ## Usage
 

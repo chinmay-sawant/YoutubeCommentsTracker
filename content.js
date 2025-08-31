@@ -1,113 +1,232 @@
-// YouTube User Comment Tracker - Content Script
+// YouTube User Comment Tracker - Content Script with YouTube API Integration
 (async () => {
     let targetUsername = '';
     let commentContainer = null;
     let processedComments = new Set();
-    let observer = null;
     let commentsLoaded = false;
     let retryCount = 0;
-    const MAX_RETRIES = 10;
+    let currentVideoId = '';
+    let nextPageToken = null;
+    let isLoadingComments = false;
+    const MAX_RETRIES = 5;
     
     // Initialize the extension
     async function initialize() {
         try {
+            // Get current video ID
+            currentVideoId = extractVideoId();
+            if (!currentVideoId) {
+                console.log('No video ID found');
+                return;
+            }
+            
+            console.log('YouTube Comment Tracker initialized for video:', currentVideoId);
+            
             // Get the target username from storage
             const result = await chrome.storage.sync.get(['targetUsername']);
             targetUsername = result.targetUsername || '';
             
-            console.log('YouTube Comment Tracker initialized with username:', targetUsername);
-            
             // Always create overlay to show status
             createCommentOverlay();
             
-            if (!targetUsername) {
-                updateOverlayStatus('Please set a username in the extension popup');
-                return;
-            }
+            updateOverlayStatus('Loading video details...');
             
-            // Force load comments section and start monitoring
-            await forceLoadComments();
-            
-            // Start monitoring for comments
-            startCommentMonitoring();
-            
-            // Wait a bit for comments to load, then process
-            setTimeout(() => {
-                processExistingComments();
-            }, 2000);
+            // Load comments using YouTube API
+            await loadCommentsFromAPI();
             
         } catch (error) {
             console.error('Failed to initialize comment tracker:', error);
-            updateOverlayStatus('Error initializing tracker');
+            updateOverlayStatus('Error initializing tracker: ' + error.message);
         }
     }
     
-    // Force scroll to comments section to trigger loading
-    async function forceLoadComments() {
-        console.log('Attempting to force load comments...');
-        
-        // Wait for page to be ready
-        await waitForElement('#comments', 5000);
-        
-        // Scroll to comments section to trigger loading
-        const commentsSection = document.querySelector('#comments');
-        if (commentsSection) {
-            commentsSection.scrollIntoView({ behavior: 'smooth' });
-            
-            // Wait a bit then scroll back to top
-            setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 1000);
-            
-            console.log('Scrolled to comments section');
-        }
-        
-        // Try to click "Show more" or load more comments
-        setTimeout(() => {
-            const showMoreBtn = document.querySelector('#comments button[aria-label*="Show"], #comments button[aria-label*="more"], ytd-button-renderer button');
-            if (showMoreBtn && showMoreBtn.textContent.toLowerCase().includes('show')) {
-                showMoreBtn.click();
-                console.log('Clicked show more comments');
-            }
-        }, 1500);
+    // Extract video ID from current YouTube URL
+    function extractVideoId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoId = urlParams.get('v');
+        console.log('Extracted video ID:', videoId);
+        return videoId;
     }
     
-    // Wait for element to appear
-    function waitForElement(selector, timeout = 5000) {
-        return new Promise((resolve) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                resolve(element);
-                return;
-            }
+    // Load comments using YouTube API
+    async function loadCommentsFromAPI() {
+        if (isLoadingComments || !currentVideoId) return;
+        
+        isLoadingComments = true;
+        updateOverlayStatus('Fetching comments from YouTube API...');
+        
+        try {
+            // Send message to background script to fetch comments
+            const response = await new Promise((resolve) => {
+                chrome.runtime.sendMessage({
+                    action: "fetchComments",
+                    videoId: currentVideoId,
+                    pageToken: nextPageToken
+                }, resolve);
+            });
             
-            const observer = new MutationObserver(() => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    observer.disconnect();
-                    resolve(element);
+            if (response.status === "success") {
+                const { comments, nextPageToken: newPageToken, totalResults } = response.data;
+                nextPageToken = newPageToken;
+                
+                console.log(`Loaded ${comments.length} comments from API, total: ${totalResults}`);
+                updateOverlayStatus(`Processing ${comments.length} comments...`);
+                
+                // Process the API comments
+                processAPIComments(comments);
+                
+                // Add load more button if there are more comments
+                if (nextPageToken) {
+                    addLoadMoreButton();
                 }
-            });
+                
+                // Update status based on results
+                setTimeout(() => {
+                    const foundComments = commentContainer.querySelectorAll('.yt-tracker-comment');
+                    if (foundComments.length === 0) {
+                        const message = targetUsername ? 
+                            `No matching comments found from "${targetUsername}" or with timestamps` : 
+                            'No timestamp comments found';
+                        updateOverlayStatus(message);
+                    } else {
+                        updateOverlayStatus(`Found ${foundComments.length} matching comments`);
+                    }
+                }, 1000);
+                
+                commentsLoaded = true;
+                
+            } else {
+                throw new Error(response.message || 'Failed to fetch comments');
+            }
             
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+        } catch (error) {
+            console.error('Error loading comments from API:', error);
+            retryCount++;
             
-            setTimeout(() => {
-                observer.disconnect();
-                resolve(null);
-            }, timeout);
+            if (retryCount < MAX_RETRIES) {
+                updateOverlayStatus(`API error, retrying... (${retryCount}/${MAX_RETRIES})`);
+                setTimeout(() => {
+                    isLoadingComments = false;
+                    loadCommentsFromAPI();
+                }, 2000);
+            } else {
+                updateOverlayStatus('Failed to load comments via API. Please check your API key.');
+            }
+        } finally {
+            if (retryCount >= MAX_RETRIES || commentsLoaded) {
+                isLoadingComments = false;
+            }
+        }
+    }
+    
+    // Process comments from YouTube API
+    function processAPIComments(comments) {
+        comments.forEach(comment => {
+            try {
+                // Check if we should include this comment
+                let shouldInclude = false;
+                
+                // Check if targeting specific username
+                if (targetUsername && isTargetUser(comment.username)) {
+                    shouldInclude = true;
+                }
+                
+                // Check for timestamp patterns
+                if (hasTimestampPattern(comment.text)) {
+                    shouldInclude = true;
+                }
+                
+                if (shouldInclude && !processedComments.has(comment.id)) {
+                    addCommentToOverlay(comment);
+                    processedComments.add(comment.id);
+                }
+            } catch (error) {
+                console.error('Error processing API comment:', error);
+            }
         });
     }
     
+    // Load more comments using pagination
+    async function loadMoreComments() {
+        if (isLoadingComments || !nextPageToken || !currentVideoId) return;
+        
+        console.log('Loading more comments with page token:', nextPageToken);
+        updateOverlayStatus('Loading more comments...');
+        
+        try {
+            isLoadingComments = true;
+            
+            const response = await new Promise((resolve) => {
+                chrome.runtime.sendMessage({
+                    action: "fetchComments",
+                    videoId: currentVideoId,
+                    pageToken: nextPageToken
+                }, resolve);
+            });
+            
+            if (response.status === "success") {
+                const { comments, nextPageToken: newPageToken } = response.data;
+                nextPageToken = newPageToken;
+                
+                console.log(`Loaded ${comments.length} additional comments`);
+                processAPIComments(comments);
+                
+                updateOverlayStatus(nextPageToken ? 
+                    'More comments available - click to load' : 
+                    'All comments loaded');
+                    
+                // Update load more button
+                updateLoadMoreButton();
+            }
+            
+        } catch (error) {
+            console.error('Error loading more comments:', error);
+            updateOverlayStatus('Error loading more comments');
+        } finally {
+            isLoadingComments = false;
+        }
+    }
+    
+    // Add/update load more button
+    function addLoadMoreButton() {
+        if (!commentContainer) return;
+        updateLoadMoreButton();
+    }
+    
+    function updateLoadMoreButton() {
+        if (!commentContainer) return;
+        
+        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        let loadMoreBtn = contentDiv.querySelector('.load-more-btn');
+        
+        if (nextPageToken) {
+            if (!loadMoreBtn) {
+                loadMoreBtn = document.createElement('button');
+                loadMoreBtn.className = 'load-more-btn';
+                loadMoreBtn.onclick = loadMoreComments;
+                contentDiv.appendChild(loadMoreBtn);
+            }
+            loadMoreBtn.textContent = isLoadingComments ? 'Loading...' : 'Load More Comments';
+            loadMoreBtn.disabled = isLoadingComments;
+        } else if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+    }
+    
+    // Force scroll to comments section to trigger loading (fallback)
     // Update overlay status message
     function updateOverlayStatus(message) {
         if (!commentContainer) return;
         
         const contentDiv = commentContainer.querySelector('.yt-tracker-content');
         if (contentDiv) {
-            contentDiv.innerHTML = `<div class="yt-tracker-status">${message}</div>`;
+            let statusDiv = contentDiv.querySelector('.yt-tracker-status');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.className = 'yt-tracker-status';
+                contentDiv.insertBefore(statusDiv, contentDiv.firstChild);
+            }
+            statusDiv.textContent = message;
         }
     }
     
@@ -225,131 +344,6 @@
         }
     }
     
-    // Start monitoring for new comments using MutationObserver
-    function startCommentMonitoring() {
-        // Disconnect existing observer
-        if (observer) {
-            observer.disconnect();
-        }
-        
-        console.log('Starting comment monitoring...');
-        
-        observer = new MutationObserver((mutations) => {
-            let foundNewComments = false;
-            
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    // Check if new comment elements were added
-                    mutation.addedNodes.forEach((node) => {
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            // Look for comment elements in the added node
-                            const commentElements = node.querySelectorAll ? 
-                                node.querySelectorAll('ytd-comment-thread-renderer, ytd-comment-renderer, #comment, .comment') : [];
-                            
-                            if (commentElements.length > 0) {
-                                foundNewComments = true;
-                                // Add delay to ensure comment data is fully loaded
-                                setTimeout(() => {
-                                    processCommentElements(commentElements);
-                                }, 500);
-                            }
-                            
-                            // Check if the node itself is a comment element
-                            if (node.matches && 
-                                node.matches('ytd-comment-thread-renderer, ytd-comment-renderer, #comment, .comment')) {
-                                foundNewComments = true;
-                                setTimeout(() => {
-                                    processCommentElements([node]);
-                                }, 500);
-                            }
-                        }
-                    });
-                }
-            });
-            
-            if (foundNewComments && !commentsLoaded) {
-                commentsLoaded = true;
-                updateOverlayStatus('Comments loaded! Searching for matches...');
-            }
-        });
-        
-        // Start observing the entire document for comments
-        observer.observe(document, {
-            childList: true,
-            subtree: true
-        });
-        
-        // Also set up a periodic check in case MutationObserver misses something
-        setInterval(() => {
-            if (document.querySelector('ytd-comment-thread-renderer, ytd-comment-renderer')) {
-                processExistingComments();
-            }
-        }, 5000);
-    }
-    
-    // Process existing comments on page load with retry logic
-    function processExistingComments() {
-        const commentElements = document.querySelectorAll('ytd-comment-thread-renderer, ytd-comment-renderer, #comment, .comment');
-        
-        if (commentElements.length === 0) {
-            retryCount++;
-            if (retryCount < MAX_RETRIES) {
-                console.log(`No comments found, retrying... (${retryCount}/${MAX_RETRIES})`);
-                updateOverlayStatus(`Loading comments... (${retryCount}/${MAX_RETRIES})`);
-                setTimeout(processExistingComments, 2000);
-                return;
-            } else {
-                updateOverlayStatus('No comments found on this video');
-                return;
-            }
-        }
-        
-        console.log(`Found ${commentElements.length} comment elements`);
-        commentsLoaded = true;
-        updateOverlayStatus('Searching through comments...');
-        
-        processCommentElements(commentElements);
-        
-        // Update status based on results
-        setTimeout(() => {
-            const foundComments = commentContainer.querySelectorAll('.yt-tracker-comment');
-            if (foundComments.length === 0) {
-                updateOverlayStatus(targetUsername ? 
-                    `No comments found from "${targetUsername}"` : 
-                    'No timestamp comments found');
-            }
-        }, 1000);
-    }
-    
-    // Process comment elements and filter by target username or timestamp patterns
-    function processCommentElements(elements) {
-        elements.forEach((element) => {
-            try {
-                const commentData = extractCommentData(element);
-                if (commentData) {
-                    let shouldInclude = false;
-                    
-                    // Check if targeting specific username
-                    if (targetUsername && isTargetUser(commentData.username)) {
-                        shouldInclude = true;
-                    }
-                    
-                    // Check for timestamp patterns (like "0:19", "1:23", "10:45")
-                    if (hasTimestampPattern(commentData.text)) {
-                        shouldInclude = true;
-                    }
-                    
-                    if (shouldInclude && !processedComments.has(commentData.id)) {
-                        addCommentToOverlay(commentData);
-                        processedComments.add(commentData.id);
-                    }
-                }
-            } catch (error) {
-                console.error('Error processing comment element:', error);
-            }
-        });
-    }
-    
     // Check if comment contains timestamp patterns
     function hasTimestampPattern(text) {
         if (!text) return false;
@@ -357,49 +351,6 @@
         // Regex to match timestamp patterns like 0:19, 1:23, 10:45, etc.
         const timestampRegex = /\b\d{1,2}:\d{2}\b/g;
         return timestampRegex.test(text);
-    }
-    
-    // Extract comment data from YouTube comment element
-    function extractCommentData(element) {
-        try {
-            // Find the main comment content (handle both thread and reply comments)
-            const commentRenderer = element.querySelector('ytd-comment-renderer') || element;
-            
-            // Extract username
-            const authorElement = commentRenderer.querySelector('#author-text span, #author-text a, .ytd-comment-renderer #author-text');
-            const username = authorElement ? authorElement.textContent.trim() : '';
-            
-            // Extract comment text
-            const contentElement = commentRenderer.querySelector('#content-text, .ytd-comment-renderer #content-text');
-            const text = contentElement ? contentElement.textContent.trim() : '';
-            
-            // Extract timestamp
-            const timestampElement = commentRenderer.querySelector('#published-time-text a, .published-time-text a, #published-time-text');
-            const timestamp = timestampElement ? timestampElement.textContent.trim() : '';
-            
-            // Extract like count
-            const likeElement = commentRenderer.querySelector('#vote-count-middle, .vote-count-middle, #vote-count-left');
-            const likes = likeElement ? (likeElement.textContent.trim() || '0') : '0';
-            
-            // Create unique ID for the comment
-            const id = `${username}_${timestamp}_${text.substring(0, 50)}`;
-            
-            if (!username || !text) {
-                return null;
-            }
-            
-            return {
-                id,
-                username,
-                text,
-                timestamp,
-                likes,
-                dislikes: '0' // YouTube removed public dislike counts
-            };
-        } catch (error) {
-            console.error('Error extracting comment data:', error);
-            return null;
-        }
     }
     
     // Check if the comment is from the target user
@@ -417,7 +368,7 @@
         const statusDiv = contentDiv.querySelector('.yt-tracker-status');
         
         // Remove status message on first comment
-        if (statusDiv) {
+        if (statusDiv && (statusDiv.textContent.includes('Loading') || statusDiv.textContent.includes('Processing'))) {
             statusDiv.remove();
         }
         
@@ -452,12 +403,36 @@
             </div>
         `;
         
-        // Add to top of comments (most recent first)
-        contentDiv.insertBefore(commentElement, contentDiv.firstChild);
+        // Add to top of comments (most recent first), but after load more button
+        const loadMoreBtn = contentDiv.querySelector('.load-more-btn');
+        if (loadMoreBtn) {
+            contentDiv.insertBefore(commentElement, loadMoreBtn);
+        } else {
+            contentDiv.insertBefore(commentElement, contentDiv.firstChild);
+        }
         
-        // Limit to 15 comments to prevent overflow
+        // Add click handlers for timestamp links
+        const timestampLinks = commentElement.querySelectorAll('.timestamp-link');
+        timestampLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const timestamp = parseInt(link.getAttribute('data-timestamp'));
+                seekToTimestamp(timestamp);
+            });
+            
+            // Add keyboard support
+            link.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const timestamp = parseInt(link.getAttribute('data-timestamp'));
+                    seekToTimestamp(timestamp);
+                }
+            });
+        });
+        
+        // Limit to 20 comments to prevent overflow
         const comments = contentDiv.querySelectorAll('.yt-tracker-comment');
-        if (comments.length > 15) {
+        if (comments.length > 20) {
             comments[comments.length - 1].remove();
         }
         
@@ -473,7 +448,29 @@
         if (!text) return '';
         
         const timestampRegex = /\b(\d{1,2}:\d{2})\b/g;
-        return escapeHtml(text).replace(timestampRegex, '<span class="timestamp-highlight">$1</span>');
+        return escapeHtml(text).replace(timestampRegex, (match, timestamp) => {
+            // Convert timestamp to seconds
+            const [minutes, seconds] = timestamp.split(':').map(Number);
+            const totalSeconds = minutes * 60 + seconds;
+            
+            return `<span class="yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color timestamp-link" tabindex="0" data-timestamp="${totalSeconds}" style="cursor: pointer;">${timestamp}</span>`;
+        });
+    }
+    
+    // Seek video to specific timestamp (like YouTube's native behavior)
+    function seekToTimestamp(seconds) {
+        try {
+            // Try to find the YouTube video player
+            const videoElement = document.querySelector('video');
+            if (videoElement) {
+                videoElement.currentTime = seconds;
+                console.log(`Seeked to ${seconds} seconds`);
+            } else {
+                console.log('Video element not found');
+            }
+        } catch (error) {
+            console.error('Error seeking to timestamp:', error);
+        }
     }
     
     // Get label for comment type
@@ -486,7 +483,7 @@
         }
     }
     
-    // Show brief notification
+    // Show notification
     function showNotification(message) {
         const notification = document.createElement('div');
         notification.className = 'yt-tracker-notification';
@@ -516,6 +513,7 @@
             processedComments.clear();
             commentsLoaded = false;
             retryCount = 0;
+            nextPageToken = null;
             
             console.log('Username changed from', oldUsername, 'to', targetUsername);
             
@@ -529,19 +527,12 @@
                 
                 // Clear existing comments and restart
                 const contentDiv = commentContainer.querySelector('.yt-tracker-content');
-                if (targetUsername) {
-                    contentDiv.innerHTML = '<div class="yt-tracker-status">Searching for comments...</div>';
-                    // Re-process existing comments with new username
-                    setTimeout(() => {
-                        processExistingComments();
-                    }, 500);
-                } else {
-                    contentDiv.innerHTML = '<div class="yt-tracker-status">Showing timestamp comments</div>';
-                    // Still show timestamp comments even without username
-                    setTimeout(() => {
-                        processExistingComments();
-                    }, 500);
-                }
+                contentDiv.innerHTML = '<div class="yt-tracker-status">Reloading comments...</div>';
+                
+                // Re-load comments with new settings
+                setTimeout(() => {
+                    loadCommentsFromAPI();
+                }, 500);
             }
         }
     });
@@ -566,6 +557,8 @@
                 processedComments.clear();
                 commentsLoaded = false;
                 retryCount = 0;
+                nextPageToken = null;
+                isLoadingComments = false;
                 setTimeout(initialize, 3000); // Wait longer for new page to load
             }
         }

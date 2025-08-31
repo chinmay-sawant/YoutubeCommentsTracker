@@ -148,14 +148,17 @@
   color: #ffffff;
 }
 
-/* Timestamp highlighting */
-.timestamp-highlight {
-  background: rgba(255, 215, 0, 0.8);
-  color: #000000;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-family: "Courier New", monospace;
+/* Ensure YouTube's native timestamp links work in our overlay */
+.yt-tracker-comment .yt-core-attributed-string__link,
+.yt-tracker-comment .timestamp-link {
+  color: var(--yt-spec-call-to-action, #3ea6ff) !important;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.yt-tracker-comment .yt-core-attributed-string__link:hover,
+.yt-tracker-comment .timestamp-link:hover {
+  text-decoration: underline;
 }
 
 /* Comment type styling */
@@ -177,6 +180,32 @@
 .yt-comment-type {
   font-size: 11px;
   margin-left: auto;
+}
+
+/* Load more button styling */
+.load-more-btn {
+  width: 100%;
+  padding: 10px 15px;
+  margin: 10px 0;
+  background: rgba(255, 107, 107, 0.8);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 1);
+  transform: translateY(-1px);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .yt-comment-stats {
