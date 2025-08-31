@@ -72,24 +72,21 @@
                 console.log(`Loaded ${comments.length} comments from API, total: ${totalResults}`);
                 updateOverlayStatus(`Processing ${comments.length} comments...`);
                 
-                // Process the API comments
-                processAPIComments(comments);
-                
-                // Add load more button if there are more comments
+                // Add load more button if there are more comments (before processing comments)
                 if (nextPageToken) {
                     addLoadMoreButton();
                 }
+                
+                // Process the API comments
+                processAPIComments(comments);
                 
                 // Update status based on results
                 setTimeout(() => {
                     const foundComments = commentContainer.querySelectorAll('.yt-tracker-comment');
                     if (foundComments.length === 0) {
-                        const message = targetUsername ? 
-                            `No matching comments found from "${targetUsername}" or with timestamps` : 
-                            'No timestamp comments found';
-                        updateOverlayStatus(message);
+                        updateOverlayStatus('No comments found');
                     } else {
-                        updateOverlayStatus(`Found ${foundComments.length} matching comments`);
+                        updateOverlayStatus(`Showing ${foundComments.length} comments`);
                     }
                 }, 1000);
                 
@@ -121,41 +118,54 @@
     
     // Process comments from YouTube API
     function processAPIComments(comments) {
+        console.log(`Processing ${comments.length} API comments...`);
+        
         comments.forEach(comment => {
             try {
                 // Check if we should include this comment
                 let shouldInclude = false;
                 
+                // Always include all comments by default
+                shouldInclude = true;
+                
+                // Additional logic for special handling (if needed)
                 // Check if targeting specific username
-                if (targetUsername && isTargetUser(comment.username)) {
-                    shouldInclude = true;
-                }
+                const isFromTargetUser = targetUsername && isTargetUser(comment.username);
                 
                 // Check for timestamp patterns
-                if (hasTimestampPattern(comment.text)) {
-                    shouldInclude = true;
-                }
+                const hasTimestamps = hasTimestampPattern(comment.text);
                 
                 if (shouldInclude && !processedComments.has(comment.id)) {
-                    addCommentToOverlay(comment);
+                    // Add metadata to comment for styling
+                    comment.isFromTargetUser = isFromTargetUser;
+                    comment.hasTimestamps = hasTimestamps;
+                    
+                    console.log('Adding comment to overlay:', comment.username, comment.text.substring(0, 50));
+                    addCommentToOverlay(comment, false); // false = not a real-time comment, no notification
                     processedComments.add(comment.id);
+                } else if (processedComments.has(comment.id)) {
+                    console.log('Skipping duplicate comment:', comment.id);
                 }
             } catch (error) {
                 console.error('Error processing API comment:', error);
             }
         });
+        
+        console.log(`Total processed comments now: ${processedComments.size}`);
     }
     
     // Load more comments using pagination
     async function loadMoreComments() {
-        if (isLoadingComments || !nextPageToken || !currentVideoId) return;
+        if (isLoadingComments || !nextPageToken || !currentVideoId) {
+            console.log('Load more blocked:', { isLoadingComments, nextPageToken, currentVideoId });
+            return;
+        }
         
         console.log('Loading more comments with page token:', nextPageToken);
-        updateOverlayStatus('Loading more comments...');
+        isLoadingComments = true;
+        updateLoadMoreButton(); // Update button to show loading state
         
         try {
-            isLoadingComments = true;
-            
             const response = await new Promise((resolve) => {
                 chrome.runtime.sendMessage({
                     action: "fetchComments",
@@ -168,22 +178,26 @@
                 const { comments, nextPageToken: newPageToken } = response.data;
                 nextPageToken = newPageToken;
                 
-                console.log(`Loaded ${comments.length} additional comments`);
+                console.log(`Loaded ${comments.length} additional comments. Next token:`, nextPageToken);
                 processAPIComments(comments);
                 
-                updateOverlayStatus(nextPageToken ? 
-                    'More comments available - click to load' : 
-                    'All comments loaded');
-                    
                 // Update load more button
                 updateLoadMoreButton();
+                
+                // Remove status message if it exists
+                const statusDiv = commentContainer.querySelector('.yt-tracker-status');
+                if (statusDiv && statusDiv.textContent.includes('Loading')) {
+                    statusDiv.remove();
+                }
+            } else {
+                console.error('Failed to load more comments:', response.message);
             }
             
         } catch (error) {
             console.error('Error loading more comments:', error);
-            updateOverlayStatus('Error loading more comments');
         } finally {
             isLoadingComments = false;
+            updateLoadMoreButton(); // Update button state
         }
     }
     
@@ -203,8 +217,11 @@
             if (!loadMoreBtn) {
                 loadMoreBtn = document.createElement('button');
                 loadMoreBtn.className = 'load-more-btn';
-                loadMoreBtn.onclick = loadMoreComments;
+                loadMoreBtn.addEventListener('click', loadMoreComments);
                 contentDiv.appendChild(loadMoreBtn);
+                
+                console.log('Load more button created and added to contentDiv');
+                console.log('ContentDiv children after adding load more button:', contentDiv.children.length);
             }
             loadMoreBtn.textContent = isLoadingComments ? 'Loading...' : 'Load More Comments';
             loadMoreBtn.disabled = isLoadingComments;
@@ -263,6 +280,9 @@
         
         // Make container draggable
         makeDraggable(commentContainer);
+        
+        // Add scroll-based loading
+        addScrollBasedLoading();
         
         // Reposition when window resizes
         window.addEventListener('resize', positionOverlayToVideoPlayer);
@@ -344,6 +364,26 @@
         }
     }
     
+    // Add scroll-based loading functionality
+    function addScrollBasedLoading() {
+        if (!commentContainer) return;
+        
+        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        if (!contentDiv) return;
+        
+        contentDiv.addEventListener('scroll', () => {
+            // Check if scrolled to bottom (within 10px)
+            const isAtBottom = contentDiv.scrollTop + contentDiv.clientHeight >= contentDiv.scrollHeight - 10;
+            
+            if (isAtBottom && nextPageToken && !isLoadingComments) {
+                console.log('Reached bottom, loading more comments...');
+                loadMoreComments();
+            }
+        });
+        
+        console.log('Scroll-based loading added to comment container');
+    }
+    
     // Check if comment contains timestamp patterns
     function hasTimestampPattern(text) {
         if (!text) return false;
@@ -361,10 +401,20 @@
     }
     
     // Add comment to the overlay
-    function addCommentToOverlay(commentData) {
-        if (!commentContainer) return;
+    function addCommentToOverlay(commentData, shouldShowNotification = false) {
+        console.log('addCommentToOverlay called for:', commentData.username);
+        
+        if (!commentContainer) {
+            console.error('Comment container not found!');
+            return;
+        }
         
         const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        if (!contentDiv) {
+            console.error('Content div not found!');
+            return;
+        }
+        
         const statusDiv = contentDiv.querySelector('.yt-tracker-status');
         
         // Remove status message on first comment
@@ -375,9 +425,9 @@
         // Highlight timestamps in comment text
         const highlightedText = highlightTimestamps(commentData.text);
         
-        // Determine comment type for styling
-        const isTargetUser = targetUsername && commentData.username.toLowerCase().includes(targetUsername.toLowerCase());
-        const hasTimestamp = hasTimestampPattern(commentData.text);
+        // Determine comment type for styling using the metadata we added
+        const isTargetUser = commentData.isFromTargetUser || false;
+        const hasTimestamp = commentData.hasTimestamps || false;
         
         let commentType = '';
         if (isTargetUser && hasTimestamp) {
@@ -403,13 +453,20 @@
             </div>
         `;
         
-        // Add to top of comments (most recent first), but after load more button
+        // Add comments before the load more button (so they appear above it)
         const loadMoreBtn = contentDiv.querySelector('.load-more-btn');
+        
+        console.log('Adding comment. Load more button exists:', !!loadMoreBtn);
+        
         if (loadMoreBtn) {
+            console.log('Inserting comment before load more button');
             contentDiv.insertBefore(commentElement, loadMoreBtn);
         } else {
-            contentDiv.insertBefore(commentElement, contentDiv.firstChild);
+            console.log('No load more button, appending to end');
+            contentDiv.appendChild(commentElement);
         }
+        
+        console.log('Comment element added to overlay. Current comment count:', contentDiv.querySelectorAll('.yt-tracker-comment').length);
         
         // Add click handlers for timestamp links
         const timestampLinks = commentElement.querySelectorAll('.timestamp-link');
@@ -430,17 +487,16 @@
             });
         });
         
-        // Limit to 20 comments to prevent overflow
-        const comments = contentDiv.querySelectorAll('.yt-tracker-comment');
-        if (comments.length > 20) {
-            comments[comments.length - 1].remove();
+        // Show notification only for real-time comments, not paginated ones
+        if (shouldShowNotification) {
+            const notificationText = isTargetUser ? 
+                `New comment from ${commentData.username}` :
+                `New comment: ${commentData.text.substring(0, 50)}...`;
+            console.log('Showing notification for real-time comment');
+            showNotification(notificationText);
+        } else {
+            console.log('Skipping notification for paginated comment');
         }
-        
-        // Show notification
-        const notificationText = isTargetUser ? 
-            `New comment from ${commentData.username}` :
-            `New timestamp comment: ${commentData.text.substring(0, 50)}...`;
-        showNotification(notificationText);
     }
     
     // Highlight timestamp patterns in text

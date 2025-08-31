@@ -34,7 +34,11 @@ async function fetchYouTubeComments(videoId, pageToken = null) {
         const response = await fetch(apiUrl);
         
         if (!response.ok) {
-            throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+            // Get detailed error information
+            const errorData = await response.json().catch(() => null);
+            const errorMessage = errorData?.error?.message || `${response.status} ${response.statusText}`;
+            console.error('YouTube API Error Details:', errorData);
+            throw new Error(`YouTube API error: ${response.status} - ${errorMessage}`);
         }
         
         const data = await response.json();
