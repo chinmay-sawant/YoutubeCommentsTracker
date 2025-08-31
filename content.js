@@ -8,6 +8,8 @@
     let currentVideoId = '';
     let nextPageToken = null;
     let isLoadingComments = false;
+    let currentSortOrder = 'top'; // Default sort order
+    let allComments = []; // Store all comments for client-side sorting
     const MAX_RETRIES = 5;
     
     // Initialize the extension
@@ -61,7 +63,8 @@
                 chrome.runtime.sendMessage({
                     action: "fetchComments",
                     videoId: currentVideoId,
-                    pageToken: nextPageToken
+                    pageToken: nextPageToken,
+                    sortOrder: currentSortOrder
                 }, resolve);
             });
             
@@ -83,11 +86,26 @@
                 // Update status based on results
                 setTimeout(() => {
                     const foundComments = commentContainer.querySelectorAll('.yt-tracker-comment');
+                    let statusMessage = '';
+                    
                     if (foundComments.length === 0) {
-                        updateOverlayStatus('No comments found');
+                        if (currentSortOrder === 'top') {
+                            statusMessage = 'No comments with timestamps found';
+                        } else if (currentSortOrder === 'top-no-timestamps') {
+                            statusMessage = 'No comments without timestamps found';
+                        } else {
+                            statusMessage = 'No comments found';
+                        }
                     } else {
-                        updateOverlayStatus(`Showing ${foundComments.length} comments`);
+                        const sortDescription = {
+                            'top': 'timestamp comments',
+                            'top-no-timestamps': 'comments without timestamps',
+                            'newest': 'newest comments'
+                        };
+                        statusMessage = `Showing ${foundComments.length} ${sortDescription[currentSortOrder] || 'comments'}`;
                     }
+                    
+                    updateOverlayStatus(statusMessage);
                 }, 1000);
                 
                 commentsLoaded = true;
@@ -118,24 +136,29 @@
     
     // Process comments from YouTube API
     function processAPIComments(comments) {
-        console.log(`Processing ${comments.length} API comments...`);
+        console.log(`Processing ${comments.length} API comments with sort order: ${currentSortOrder}`);
         
-        comments.forEach(comment => {
+        // Filter comments based on sort order
+        let filteredComments = comments;
+        
+        if (currentSortOrder === 'top') {
+            // Show only comments with timestamps
+            filteredComments = comments.filter(comment => hasTimestampPattern(comment.text));
+            console.log(`Filtered to ${filteredComments.length} comments with timestamps`);
+        } else if (currentSortOrder === 'top-no-timestamps') {
+            // Show only comments without timestamps
+            filteredComments = comments.filter(comment => !hasTimestampPattern(comment.text));
+            console.log(`Filtered to ${filteredComments.length} comments without timestamps`);
+        }
+        // For 'newest', show all comments (no filtering needed)
+        
+        filteredComments.forEach(comment => {
             try {
-                // Check if we should include this comment
-                let shouldInclude = false;
-                
-                // Always include all comments by default
-                shouldInclude = true;
-                
-                // Additional logic for special handling (if needed)
-                // Check if targeting specific username
+                // Additional logic for special handling
                 const isFromTargetUser = targetUsername && isTargetUser(comment.username);
-                
-                // Check for timestamp patterns
                 const hasTimestamps = hasTimestampPattern(comment.text);
                 
-                if (shouldInclude && !processedComments.has(comment.id)) {
+                if (!processedComments.has(comment.id)) {
                     // Add metadata to comment for styling
                     comment.isFromTargetUser = isFromTargetUser;
                     comment.hasTimestamps = hasTimestamps;
@@ -170,7 +193,8 @@
                 chrome.runtime.sendMessage({
                     action: "fetchComments",
                     videoId: currentVideoId,
-                    pageToken: nextPageToken
+                    pageToken: nextPageToken,
+                    sortOrder: currentSortOrder
                 }, resolve);
             });
             
@@ -262,6 +286,13 @@
                 <span class="yt-tracker-title">${targetUsername ? `Tracking: ${targetUsername}` : 'Comment Tracker'}</span>
                 <button class="yt-tracker-close" title="Close tracker">×</button>
             </div>
+            <div class="yt-tracker-controls">
+                <select class="yt-sort-dropdown" id="comment-sort-select">
+                    <option value="top">Top Comments (with timestamps)</option>
+                    <option value="top-no-timestamps">Top Comments (without timestamps)</option>
+                    <option value="newest">Newest Comments</option>
+                </select>
+            </div>
             <div class="yt-tracker-content">
                 <div class="yt-tracker-status">Loading comments...</div>
             </div>
@@ -278,6 +309,11 @@
             commentContainer.style.display = 'none';
         });
         
+        // Add sort dropdown functionality
+        const sortDropdown = commentContainer.querySelector('#comment-sort-select');
+        sortDropdown.value = currentSortOrder;
+        sortDropdown.addEventListener('change', handleSortChange);
+        
         // Make container draggable
         makeDraggable(commentContainer);
         
@@ -286,6 +322,43 @@
         
         // Reposition when window resizes
         window.addEventListener('resize', positionOverlayToVideoPlayer);
+    }
+    
+    // Handle sort dropdown change
+    async function handleSortChange(event) {
+        const newSortOrder = event.target.value;
+        console.log('Sort order changed to:', newSortOrder);
+        
+        if (newSortOrder === currentSortOrder) return;
+        
+        currentSortOrder = newSortOrder;
+        
+        // Clear existing comments and reload with new sort order
+        clearComments();
+        processedComments.clear();
+        nextPageToken = null;
+        commentsLoaded = false;
+        
+        // Reload comments with new sort order
+        await loadCommentsFromAPI();
+    }
+    
+    // Clear all comments from the overlay
+    function clearComments() {
+        if (!commentContainer) return;
+        
+        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        if (!contentDiv) return;
+        
+        // Remove all comment elements
+        const commentElements = contentDiv.querySelectorAll('.yt-tracker-comment');
+        commentElements.forEach(el => el.remove());
+        
+        // Remove load more button
+        const loadMoreBtn = contentDiv.querySelector('.load-more-btn');
+        if (loadMoreBtn) loadMoreBtn.remove();
+        
+        console.log('Comments cleared from overlay');
     }
     
     // Position overlay relative to video player

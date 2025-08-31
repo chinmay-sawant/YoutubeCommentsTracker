@@ -63,8 +63,35 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+.yt-tracker-controls {
+  padding: 8px 15px;
+  background: rgba(20, 20, 20, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.yt-sort-dropdown {
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(40, 40, 40, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.yt-sort-dropdown:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.yt-sort-dropdown option {
+  background: rgba(40, 40, 40, 1);
+  color: #ffffff;
+}
+
 .yt-tracker-content {
-  max-height: 420px;
+  max-height: 380px;
   overflow-y: auto;
   padding: 0;
   scrollbar-width: thin;

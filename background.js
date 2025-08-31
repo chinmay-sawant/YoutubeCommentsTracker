@@ -6,7 +6,7 @@ const YOUTUBE_API_KEY = "YOUR_API_KEY"; // Replace with your actual API key
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "fetchComments") {
-        fetchYouTubeComments(request.videoId, request.pageToken)
+        fetchYouTubeComments(request.videoId, request.pageToken, request.sortOrder)
             .then(data => sendResponse({ status: "success", data: data }))
             .catch(error => sendResponse({ status: "error", message: error.message }));
         return true; // Indicates response will be sent asynchronously
@@ -21,9 +21,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Fetch comments from YouTube API
-async function fetchYouTubeComments(videoId, pageToken = null) {
+async function fetchYouTubeComments(videoId, pageToken = null, sortOrder = 'relevance') {
     try {
-        let apiUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=${videoId}&key=${YOUTUBE_API_KEY}&maxResults=200&order=relevance`;
+        // Map sort order to YouTube API parameter
+        let apiOrder = 'relevance';
+        if (sortOrder === 'newest') {
+            apiOrder = 'time';
+        } else if (sortOrder === 'top' || sortOrder === 'top-no-timestamps') {
+            apiOrder = 'relevance';
+        }
+        
+        let apiUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=${videoId}&key=${YOUTUBE_API_KEY}&maxResults=200&order=${apiOrder}`;
         
         if (pageToken) {
             apiUrl += `&pageToken=${pageToken}`;
@@ -49,7 +57,8 @@ async function fetchYouTubeComments(videoId, pageToken = null) {
         return {
             comments: processedComments,
             nextPageToken: data.nextPageToken,
-            totalResults: data.pageInfo?.totalResults || 0
+            totalResults: data.pageInfo?.totalResults || 0,
+            sortOrder: sortOrder
         };
         
     } catch (error) {
