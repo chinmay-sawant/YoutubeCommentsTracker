@@ -322,6 +322,41 @@
         
         // Reposition when window resizes
         window.addEventListener('resize', positionOverlayToVideoPlayer);
+        
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', positionOverlayToVideoPlayer);
+        document.addEventListener('webkitfullscreenchange', positionOverlayToVideoPlayer);
+        document.addEventListener('mozfullscreenchange', positionOverlayToVideoPlayer);
+        document.addEventListener('MSFullscreenChange', positionOverlayToVideoPlayer);
+        
+        // Listen for YouTube player changes (controls visibility, etc.)
+        const playerObserver = new MutationObserver(() => {
+            // Debounce the positioning to avoid too many calls
+            clearTimeout(window.repositionTimeout);
+            window.repositionTimeout = setTimeout(positionOverlayToVideoPlayer, 100);
+        });
+        
+        // Observe changes in the player container
+        const playerContainer = document.querySelector('#movie_player, .html5-video-player, #ytd-player');
+        if (playerContainer) {
+            playerObserver.observe(playerContainer, {
+                attributes: true,
+                attributeFilter: ['class', 'style'],
+                childList: true,
+                subtree: false
+            });
+        }
+        
+        // Also observe body class changes for theater mode
+        const bodyObserver = new MutationObserver(() => {
+            clearTimeout(window.repositionTimeout);
+            window.repositionTimeout = setTimeout(positionOverlayToVideoPlayer, 100);
+        });
+        
+        bodyObserver.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
     }
     
     // Handle sort dropdown change
@@ -365,75 +400,174 @@
     function positionOverlayToVideoPlayer() {
         if (!commentContainer) return;
         
+        // Check if we're in fullscreen mode
+        const isFullscreen = !!(document.fullscreenElement || 
+                               document.webkitFullscreenElement || 
+                               document.mozFullScreenElement || 
+                               document.msFullscreenElement);
+        
+        // Check if we're in theater mode
+        const isTheaterMode = document.body.classList.contains('theater') || 
+                              document.querySelector('.ytd-watch-flexy[theater]');
+        
         // Find the video player element
         const videoPlayer = document.querySelector('#movie_player, .html5-video-player, #ytd-player');
+        
+        // Add/remove fullscreen class for CSS styling
+        if (isFullscreen) {
+            commentContainer.classList.add('fullscreen-mode');
+        } else {
+            commentContainer.classList.remove('fullscreen-mode');
+        }
         
         if (videoPlayer) {
             const playerRect = videoPlayer.getBoundingClientRect();
             
-            // Position at bottom-right of video player with some margin
-            const rightMargin = 20;
-            const bottomMargin = 20;
-            
-            commentContainer.style.position = 'fixed';
-            commentContainer.style.right = `${window.innerWidth - playerRect.right + rightMargin}px`;
-            commentContainer.style.bottom = `${window.innerHeight - playerRect.bottom + bottomMargin}px`;
-            commentContainer.style.top = 'auto';
-            
-            console.log('Positioned overlay relative to video player');
+            if (isFullscreen) {
+                // In fullscreen: position at top-right, just above fullscreen button
+                const rightMargin = 60; // Space for fullscreen button and some margin
+                const topMargin = 20;
+                
+                commentContainer.style.position = 'fixed';
+                commentContainer.style.right = `${rightMargin}px`;
+                commentContainer.style.top = `${topMargin}px`;
+                commentContainer.style.bottom = 'auto';
+                commentContainer.style.zIndex = '9999999'; // Very high z-index for fullscreen
+                
+                console.log('Positioned overlay for fullscreen mode');
+            } else if (isTheaterMode) {
+                // Theater mode: position at right side of video player
+                const rightMargin = 50;
+                const topMargin = 80; // Account for YouTube header
+                
+                commentContainer.style.position = 'fixed';
+                commentContainer.style.right = `${window.innerWidth - playerRect.right + rightMargin}px`;
+                commentContainer.style.top = `${topMargin}px`;
+                commentContainer.style.bottom = 'auto';
+                commentContainer.style.zIndex = '999999';
+                
+                console.log('Positioned overlay for theater mode');
+            } else {
+                // Normal mode: position at bottom-right of video player, above fullscreen button
+                const rightMargin = 60; // Space for fullscreen button
+                const bottomMargin = 60; // Above the controls bar
+                
+                commentContainer.style.position = 'fixed';
+                commentContainer.style.right = `${window.innerWidth - playerRect.right + rightMargin}px`;
+                commentContainer.style.bottom = `${window.innerHeight - playerRect.bottom + bottomMargin}px`;
+                commentContainer.style.top = 'auto';
+                commentContainer.style.zIndex = '999999';
+                
+                console.log('Positioned overlay relative to video player (normal mode)');
+            }
         } else {
-            // Fallback to bottom-right of screen
-            commentContainer.style.position = 'fixed';
-            commentContainer.style.right = '20px';
-            commentContainer.style.bottom = '20px';
-            commentContainer.style.top = 'auto';
+            // Fallback positioning
+            if (isFullscreen) {
+                commentContainer.style.position = 'fixed';
+                commentContainer.style.right = '60px';
+                commentContainer.style.top = '20px';
+                commentContainer.style.bottom = 'auto';
+                commentContainer.style.zIndex = '9999999';
+            } else {
+                commentContainer.style.position = 'fixed';
+                commentContainer.style.right = '20px';
+                commentContainer.style.bottom = '20px';
+                commentContainer.style.top = 'auto';
+                commentContainer.style.zIndex = '999999';
+            }
             
-            console.log('Video player not found, using screen bottom-right');
+            console.log('Video player not found, using fallback positioning');
         }
     }
     
     // Make the overlay draggable
     function makeDraggable(element) {
         let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
+        let currentX = 0;
+        let currentY = 0;
+        let initialX = 0;
+        let initialY = 0;
         let xOffset = 0;
         let yOffset = 0;
         
         const header = element.querySelector('.yt-tracker-header');
         
-        header.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
+        // Add visual feedback for drag state
+        header.style.cursor = 'grab';
+        
+        header.addEventListener('mousedown', dragStart, { passive: false });
+        document.addEventListener('mousemove', drag, { passive: false });
         document.addEventListener('mouseup', dragEnd);
         
+        // Touch events for mobile support
+        header.addEventListener('touchstart', dragStart, { passive: false });
+        document.addEventListener('touchmove', drag, { passive: false });
+        document.addEventListener('touchend', dragEnd);
+        
         function dragStart(e) {
-            initialX = e.clientX - xOffset;
-            initialY = e.clientY - yOffset;
+            // Handle both mouse and touch events
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            
+            initialX = clientX - xOffset;
+            initialY = clientY - yOffset;
             
             if (e.target === header || header.contains(e.target)) {
                 isDragging = true;
+                header.style.cursor = 'grabbing';
+                
+                // Add dragging class for visual feedback
+                element.classList.add('dragging');
+                
+                // Disable transitions during drag for smoother movement
+                element.style.transition = 'none';
+                
+                // Add slight scale effect for visual feedback
+                element.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(1.02)`;
             }
         }
         
         function drag(e) {
             if (isDragging) {
                 e.preventDefault();
-                currentX = e.clientX - initialX;
-                currentY = e.clientY - initialY;
+                
+                // Handle both mouse and touch events
+                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                
+                currentX = clientX - initialX;
+                currentY = clientY - initialY;
                 
                 xOffset = currentX;
                 yOffset = currentY;
                 
-                element.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                // Use requestAnimationFrame for smoother animation
+                requestAnimationFrame(() => {
+                    element.style.transform = `translate(${currentX}px, ${currentY}px) scale(1.02)`;
+                });
             }
         }
         
         function dragEnd() {
-            initialX = currentX;
-            initialY = currentY;
-            isDragging = false;
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                
+                header.style.cursor = 'grab';
+                
+                // Remove dragging class
+                element.classList.remove('dragging');
+                
+                // Re-enable transitions and remove scale effect
+                element.style.transition = 'transform 0.2s ease-out';
+                element.style.transform = `translate(${currentX}px, ${currentY}px) scale(1)`;
+                
+                // Reset transition after animation completes
+                setTimeout(() => {
+                    element.style.transition = '';
+                }, 200);
+            }
         }
     }
     

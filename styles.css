@@ -16,12 +16,20 @@
   z-index: 10000;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform;
 }
 
 #yt-comment-tracker-overlay:hover {
   background: rgba(0, 0, 0, 0.85);
   border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Enhanced dragging state */
+#yt-comment-tracker-overlay.dragging {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .yt-tracker-header {
@@ -284,6 +292,11 @@
     top: 10px;
   }
 
+  #yt-comment-tracker-overlay.fullscreen-mode {
+    width: 280px;
+    max-height: 350px;
+  }
+
   .yt-tracker-notification {
     right: 320px;
     top: 10px;
@@ -298,6 +311,13 @@
     max-height: 400px;
   }
 
+  #yt-comment-tracker-overlay.fullscreen-mode {
+    width: calc(100vw - 80px); /* Leave space for fullscreen button */
+    right: 60px;
+    left: auto;
+    max-height: 300px;
+  }
+
   .yt-tracker-notification {
     right: 20px;
     left: 20px;
@@ -310,9 +330,12 @@
   pointer-events: auto;
 }
 
-/* Hide overlay when YouTube is in fullscreen mode */
-.ytp-fullscreen #yt-comment-tracker-overlay {
-  display: none;
+/* Fullscreen mode adjustments */
+#yt-comment-tracker-overlay.fullscreen-mode {
+  width: 320px; /* Slightly smaller in fullscreen */
+  max-height: 400px;
+  background: rgba(0, 0, 0, 0.85); /* More opaque in fullscreen */
+  z-index: 9999999;
 }
 
 /* Adjust overlay position when YouTube theater mode is active */
