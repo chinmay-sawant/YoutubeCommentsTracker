@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Comment Tracker Settings</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup-container">
+      <div class="popup-header">
+        <img src="icons/icon48.png" alt="Extension Icon" class="popup-icon" />
+        <h1 class="popup-title">Comment Tracker</h1>
+      </div>
+
+      <div class="popup-content">
+        <div class="input-group">
+          <label for="username-input" class="input-label">
+            Target Username:
+          </label>
+          <input
+            type="text"
+            id="username-input"
+            class="username-input"
+            placeholder="Enter YouTube username to track"
+            maxlength="50"
+          />
+          <small class="input-help">
+            Enter the exact username or part of it to filter comments
+          </small>
+        </div>
+
+        <div class="button-group">
+          <button id="save-btn" class="btn btn-primary">Save Settings</button>
+          <button id="clear-btn" class="btn btn-secondary">Clear</button>
+        </div>
+
+        <div class="status-section">
+          <div id="status-message" class="status-message"></div>
+          <div class="current-settings">
+            <strong>Current target:</strong>
+            <span id="current-username" class="current-username">None set</span>
+          </div>
+        </div>
+
+        <div class="instructions">
+          <h3>How to use:</h3>
+          <ol>
+            <li>Enter the username you want to track (optional)</li>
+            <li>Click "Save Settings"</li>
+            <li>Navigate to any YouTube video</li>
+            <li>
+              The overlay will show comments from that user AND any comments
+              with timestamps (like "0:19")
+            </li>
+            <li>Leave username empty to see only timestamp comments</li>
+          </ol>
+        </div>
+
+        <div class="features">
+          <h3>Features:</h3>
+          <ul>
+            <li>✅ Real-time comment monitoring</li>
+            <li>✅ User-specific comment tracking</li>
+            <li>✅ Automatic timestamp detection (0:19, 1:23, etc.)</li>
+            <li>✅ Transparent overlay positioned near video</li>
+            <li>✅ Draggable comment feed</li>
+            <li>✅ Live notifications</li>
+            <li>✅ Auto-scroll newest comments</li>
+            <li>✅ Better comment loading with retries</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="popup-footer">
+        <div class="version-info">v1.0.0</div>
+        <div class="links">
+          <a href="#" id="help-link" class="footer-link">Help</a>
+          <span class="separator">|</span>
+          <a href="#" id="feedback-link" class="footer-link">Feedback</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
