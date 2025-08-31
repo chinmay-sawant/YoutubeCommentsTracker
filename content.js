@@ -10,6 +10,10 @@
     let isLoadingComments = false;
     let currentSortOrder = 'top'; // Default sort order
     let allComments = []; // Store all comments for client-side sorting
+    let videoPlayerTimeComments = []; // Store all comments for video player time mode
+    let videoTimeInterval = null; // Interval for checking video time
+    let lastCheckedTime = -1; // Last checked video time
+    let activeToasts = []; // Track active toast notifications
     const MAX_RETRIES = 5;
     
     // Initialize the extension
@@ -48,6 +52,258 @@
         const videoId = urlParams.get('v');
         console.log('Extracted video ID:', videoId);
         return videoId;
+    }
+    
+    // Get current video player time and duration
+    function getVideoPlayerTime() {
+        const videoElement = document.querySelector('video');
+        if (videoElement) {
+            const currentTime = Math.floor(videoElement.currentTime);
+            const duration = Math.floor(videoElement.duration);
+            return { currentTime, duration };
+        }
+        return { currentTime: 0, duration: 0 };
+    }
+    
+    // Convert seconds to timestamp format (e.g., 65 -> "1:05")
+    function formatTimestamp(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Generate time range strings based on current video time
+    function generateTimeRangeStrings(currentTime, duration) {
+        const timeRanges = [];
+        
+        // Add the full video range (0:00-end)
+        timeRanges.push(`0:00-${formatTimestamp(duration)}`);
+        
+        // Add current time specific ranges
+        if (currentTime > 0) {
+            // From start to current time
+            timeRanges.push(`0:00-${formatTimestamp(currentTime)}`);
+            
+            // Around current time (±30 seconds)
+            const startTime = Math.max(0, currentTime - 30);
+            const endTime = Math.min(duration, currentTime + 30);
+            timeRanges.push(`${formatTimestamp(startTime)}-${formatTimestamp(endTime)}`);
+            
+            // From current time to end
+            if (currentTime < duration) {
+                timeRanges.push(`${formatTimestamp(currentTime)}-${formatTimestamp(duration)}`);
+            }
+        }
+        
+        // Add common timestamp patterns that might appear in comments
+        const intervals = [10, 30, 60, 120, 300]; // 10s, 30s, 1m, 2m, 5m intervals
+        intervals.forEach(interval => {
+            for (let i = 0; i < duration; i += interval) {
+                const start = i;
+                const end = Math.min(i + interval, duration);
+                if (start < end) {
+                    timeRanges.push(`${formatTimestamp(start)}-${formatTimestamp(end)}`);
+                    // Also add individual timestamps
+                    timeRanges.push(formatTimestamp(start));
+                    if (end < duration) {
+                        timeRanges.push(formatTimestamp(end));
+                    }
+                }
+            }
+        });
+        
+        // Remove duplicates and return
+        return [...new Set(timeRanges)];
+    }
+    
+    // Create and manage toast notifications
+    function createToast(comment, timestamp) {
+        const toast = document.createElement('div');
+        toast.className = 'yt-timestamp-toast';
+        toast.innerHTML = `
+            <div class="toast-header">
+                <span class="toast-timestamp">${timestamp}</span>
+                <span class="toast-likes">👍 ${comment.likes}</span>
+            </div>
+            <div class="toast-author">@${comment.username}</div>
+            <div class="toast-content">${comment.text.substring(0, 200)}${comment.text.length > 200 ? '...' : ''}</div>
+        `;
+        
+        // Position toast
+        positionToast(toast);
+        
+        // Add to document
+        document.body.appendChild(toast);
+        
+        // Add to active toasts array
+        activeToasts.push(toast);
+        
+        // Animate in
+        setTimeout(() => toast.classList.add('toast-visible'), 10);
+        
+        // Auto remove after 10 seconds
+        setTimeout(() => {
+            removeToast(toast);
+        }, 10000);
+        
+        console.log(`Created toast for timestamp ${timestamp}:`, comment.username);
+        
+        return toast;
+    }
+    
+    // Position toast in top-right, stacking them vertically
+    function positionToast(toast) {
+        const topMargin = 20;
+        const rightMargin = 20;
+        const toastHeight = 120; // Estimated toast height
+        const spacing = 10;
+        
+        // Calculate vertical position based on existing toasts
+        const verticalOffset = activeToasts.length * (toastHeight + spacing);
+        
+        toast.style.position = 'fixed';
+        toast.style.top = `${topMargin + verticalOffset}px`;
+        toast.style.right = `${rightMargin}px`;
+        toast.style.zIndex = '10001';
+    }
+    
+    // Remove toast and reposition remaining toasts
+    function removeToast(toast) {
+        if (!toast || !toast.parentNode) return;
+        
+        // Remove from active toasts array
+        const index = activeToasts.indexOf(toast);
+        if (index > -1) {
+            activeToasts.splice(index, 1);
+        }
+        
+        // Animate out
+        toast.classList.add('toast-removing');
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+            
+            // Reposition remaining toasts
+            repositionToasts();
+        }, 300);
+    }
+    
+    // Reposition all active toasts
+    function repositionToasts() {
+        const topMargin = 20;
+        const toastHeight = 120;
+        const spacing = 10;
+        
+        activeToasts.forEach((toast, index) => {
+            if (toast && toast.parentNode) {
+                const verticalOffset = index * (toastHeight + spacing);
+                toast.style.top = `${topMargin + verticalOffset}px`;
+            }
+        });
+    }
+    
+    // Check if timestamp matches current video time
+    function isTimestampRelevant(timestamp, currentTime) {
+        // Parse timestamp format (e.g., "1:30" -> 90 seconds)
+        const parts = timestamp.split(':');
+        if (parts.length !== 2) return false;
+        
+        const minutes = parseInt(parts[0]);
+        const seconds = parseInt(parts[1]);
+        if (isNaN(minutes) || isNaN(seconds)) return false;
+        
+        const timestampSeconds = minutes * 60 + seconds;
+        
+        // Check if current time is within ±5 seconds of the timestamp
+        return Math.abs(currentTime - timestampSeconds) <= 5;
+    }
+    
+    // Extract timestamps from comment text
+    function extractTimestampsFromComment(commentText) {
+        // Regex to match timestamp patterns like "1:30", "12:45", "0:05"
+        const timestampRegex = /\b(\d{1,2}):(\d{2})\b/g;
+        const timestamps = [];
+        let match;
+        
+        while ((match = timestampRegex.exec(commentText)) !== null) {
+            timestamps.push(match[0]);
+        }
+        
+        return timestamps;
+    }
+    
+    // Monitor video time and show relevant toasts
+    function startVideoTimeMonitoring() {
+        if (videoTimeInterval) {
+            clearInterval(videoTimeInterval);
+        }
+        
+        videoTimeInterval = setInterval(() => {
+            if (currentSortOrder !== 'video-player-time') {
+                stopVideoTimeMonitoring();
+                return;
+            }
+            
+            const { currentTime } = getVideoPlayerTime();
+            const currentTimeRounded = Math.floor(currentTime);
+            
+            // Only check every 5 seconds to avoid spam
+            if (Math.abs(currentTimeRounded - lastCheckedTime) < 5) {
+                return;
+            }
+            
+            lastCheckedTime = currentTimeRounded;
+            
+            // Find comments with timestamps relevant to current time
+            const relevantComments = videoPlayerTimeComments.filter(comment => {
+                const timestamps = extractTimestampsFromComment(comment.text);
+                return timestamps.some(timestamp => isTimestampRelevant(timestamp, currentTime));
+            });
+            
+            // Sort by likes and show top 3 most relevant
+            relevantComments
+                .sort((a, b) => b.likes - a.likes)
+                .slice(0, 3)
+                .forEach(comment => {
+                    const timestamps = extractTimestampsFromComment(comment.text);
+                    const relevantTimestamp = timestamps.find(timestamp => 
+                        isTimestampRelevant(timestamp, currentTime)
+                    );
+                    
+                    if (relevantTimestamp) {
+                        // Check if we haven't already shown this comment recently
+                        const recentToasts = activeToasts.filter(toast => 
+                            toast.getAttribute('data-comment-id') === comment.id
+                        );
+                        
+                        if (recentToasts.length === 0) {
+                            const toast = createToast(comment, relevantTimestamp);
+                            if (toast) {
+                                toast.setAttribute('data-comment-id', comment.id);
+                            }
+                        }
+                    }
+                });
+            
+        }, 2000); // Check every 2 seconds
+        
+        console.log('Started video time monitoring for toasts');
+    }
+    
+    // Stop video time monitoring
+    function stopVideoTimeMonitoring() {
+        if (videoTimeInterval) {
+            clearInterval(videoTimeInterval);
+            videoTimeInterval = null;
+        }
+        
+        // Clear all active toasts
+        activeToasts.forEach(toast => removeToast(toast));
+        activeToasts = [];
+        
+        console.log('Stopped video time monitoring');
     }
     
     // Load comments using YouTube API
@@ -131,6 +387,67 @@
             if (retryCount >= MAX_RETRIES || commentsLoaded) {
                 isLoadingComments = false;
             }
+        }
+    }
+    
+    // Load comments for video player time sorting
+    async function loadCommentsForVideoPlayerTime() {
+        if (isLoadingComments || !currentVideoId) return;
+        
+        isLoadingComments = true;
+        updateOverlayStatus('Setting up video time monitoring...');
+        
+        try {
+            // Get current video time and duration
+            const { currentTime, duration } = getVideoPlayerTime();
+            
+            if (duration === 0) {
+                updateOverlayStatus('Unable to get video duration. Please try again.');
+                isLoadingComments = false;
+                return;
+            }
+            
+            updateOverlayStatus(`Loading comments for video time monitoring...`);
+            
+            // Generate time range patterns based on current video state
+            const timePatterns = generateTimeRangeStrings(currentTime, duration);
+            
+            console.log('Generated time patterns for monitoring:', timePatterns.slice(0, 10));
+            
+            // Send message to background script to search comments by time patterns
+            const response = await new Promise((resolve) => {
+                chrome.runtime.sendMessage({
+                    action: "searchCommentsByTime",
+                    videoId: currentVideoId,
+                    timePatterns: timePatterns
+                }, resolve);
+            });
+            
+            if (response.status === "success") {
+                const { comments } = response.data;
+                
+                // Store comments for video time monitoring
+                videoPlayerTimeComments = comments;
+                
+                console.log(`Loaded ${comments.length} time-related comments for monitoring`);
+                
+                // Clear the overlay and show monitoring status
+                clearComments();
+                updateOverlayStatus(`Video time monitoring active! Toasts will appear based on video progress.\n\nLoaded ${comments.length} time-related comments.`);
+                
+                // Start monitoring video time and showing toasts
+                startVideoTimeMonitoring();
+                
+                commentsLoaded = true;
+            } else {
+                console.error('API error:', response.message);
+                updateOverlayStatus('Error loading comments for time monitoring: ' + response.message);
+            }
+        } catch (error) {
+            console.error('Error setting up video player time monitoring:', error);
+            updateOverlayStatus('Failed to setup video time monitoring. Please try again.');
+        } finally {
+            isLoadingComments = false;
         }
     }
     
@@ -291,6 +608,7 @@
                     <option value="top">Top Comments (with timestamps)</option>
                     <option value="top-no-timestamps">Top Comments (without timestamps)</option>
                     <option value="newest">Newest Comments</option>
+                    <option value="video-player-time">Video Player Time</option>
                 </select>
             </div>
             <div class="yt-tracker-content">
@@ -366,6 +684,11 @@
         
         if (newSortOrder === currentSortOrder) return;
         
+        // If switching away from video-player-time, stop monitoring
+        if (currentSortOrder === 'video-player-time' && newSortOrder !== 'video-player-time') {
+            stopVideoTimeMonitoring();
+        }
+        
         currentSortOrder = newSortOrder;
         
         // Clear existing comments and reload with new sort order
@@ -374,8 +697,13 @@
         nextPageToken = null;
         commentsLoaded = false;
         
-        // Reload comments with new sort order
-        await loadCommentsFromAPI();
+        // Handle video player time sorting differently
+        if (newSortOrder === 'video-player-time') {
+            await loadCommentsForVideoPlayerTime();
+        } else {
+            // Reload comments with new sort order
+            await loadCommentsFromAPI();
+        }
     }
     
     // Clear all comments from the overlay
@@ -424,17 +752,17 @@
             const playerRect = videoPlayer.getBoundingClientRect();
             
             if (isFullscreen) {
-                // In fullscreen: position at top-right, just above fullscreen button
+                // In fullscreen: position at bottom-right, just above fullscreen button
                 const rightMargin = 60; // Space for fullscreen button and some margin
-                const topMargin = 20;
+                const bottomMargin = 60; // Above the controls bar
                 
                 commentContainer.style.position = 'fixed';
                 commentContainer.style.right = `${rightMargin}px`;
-                commentContainer.style.top = `${topMargin}px`;
-                commentContainer.style.bottom = 'auto';
+                commentContainer.style.bottom = `${bottomMargin}px`;
+                commentContainer.style.top = 'auto';
                 commentContainer.style.zIndex = '9999999'; // Very high z-index for fullscreen
                 
-                console.log('Positioned overlay for fullscreen mode');
+                console.log('Positioned overlay for fullscreen mode (bottom-right)');
             } else if (isTheaterMode) {
                 // Theater mode: position at right side of video player
                 const rightMargin = 50;
@@ -465,8 +793,8 @@
             if (isFullscreen) {
                 commentContainer.style.position = 'fixed';
                 commentContainer.style.right = '60px';
-                commentContainer.style.top = '20px';
-                commentContainer.style.bottom = 'auto';
+                commentContainer.style.bottom = '60px';
+                commentContainer.style.top = 'auto';
                 commentContainer.style.zIndex = '9999999';
             } else {
                 commentContainer.style.position = 'fixed';

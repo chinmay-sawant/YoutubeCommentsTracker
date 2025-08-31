@@ -18,6 +18,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .catch(error => sendResponse({ status: "error", message: error.message }));
         return true;
     }
+    
+    if (request.action === "searchCommentsByTime") {
+        searchCommentsByTimePatterns(request.videoId, request.timePatterns)
+            .then(data => sendResponse({ status: "success", data: data }))
+            .catch(error => sendResponse({ status: "error", message: error.message }));
+        return true;
+    }
 });
 
 // Fetch comments from YouTube API
@@ -83,6 +90,71 @@ async function fetchVideoDetails(videoId) {
         
     } catch (error) {
         console.error('Error fetching video details:', error);
+        throw error;
+    }
+}
+
+// Search comments by time patterns
+async function searchCommentsByTimePatterns(videoId, timePatterns) {
+    try {
+        console.log('Searching comments by time patterns:', timePatterns);
+        
+        // We'll fetch all comments and filter them client-side since YouTube API
+        // doesn't support direct text search in comments
+        const allComments = [];
+        let pageToken = null;
+        let totalFetched = 0;
+        const maxComments = 1000; // Limit to avoid too many API calls
+        
+        do {
+            const result = await fetchYouTubeComments(videoId, pageToken, 'relevance');
+            allComments.push(...result.comments);
+            pageToken = result.nextPageToken;
+            totalFetched += result.comments.length;
+            
+            // Break if we've fetched enough or no more pages
+            if (totalFetched >= maxComments || !pageToken) break;
+            
+        } while (pageToken);
+        
+        console.log(`Fetched ${allComments.length} comments for time pattern search`);
+        
+        // Filter comments that contain any of the time patterns
+        const matchingComments = allComments.filter(comment => {
+            const commentText = comment.text.toLowerCase();
+            return timePatterns.some(pattern => {
+                // Create regex patterns for timestamp matching
+                const timePattern = pattern.toLowerCase();
+                
+                // Direct match
+                if (commentText.includes(timePattern)) return true;
+                
+                // Match with slight variations (spaces, no colons, etc.)
+                const variations = [
+                    timePattern.replace(/:/g, ' '),
+                    timePattern.replace(/:/g, ''),
+                    timePattern.replace(/-/g, ' to '),
+                    timePattern.replace(/-/g, ' - ')
+                ];
+                
+                return variations.some(variation => commentText.includes(variation));
+            });
+        });
+        
+        // Sort by likes (highest first)
+        matchingComments.sort((a, b) => b.likes - a.likes);
+        
+        console.log(`Found ${matchingComments.length} comments matching time patterns`);
+        
+        return {
+            comments: matchingComments,
+            totalResults: matchingComments.length,
+            sortOrder: 'video-player-time',
+            searchedPatterns: timePatterns
+        };
+        
+    } catch (error) {
+        console.error('Error searching comments by time patterns:', error);
         throw error;
     }
 }
