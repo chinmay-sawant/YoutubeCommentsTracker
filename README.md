@@ -2,6 +2,12 @@
 
 A powerful Google Chrome extension that displays live-updating comments from specific users AND/OR comments containing timestamps on YouTube videos in a transparent, draggable overlay with real-time toast notifications.
 
+## 🎯 Why I Created This Extension
+
+I love watching "Daily Dose Of Internet" on YouTube where there are lots of funny moments, and I used to enjoy looking at the comments. But the main issue for me was finding relevant comments with respect to the timestamp where I was actually watching in the video.
+
+**This extension solves that problem** and provides extensive customization options to enhance your YouTube commenting experience!
+
 ## ✨ Key Features
 
 ### 🎯 Smart Comment Tracking
