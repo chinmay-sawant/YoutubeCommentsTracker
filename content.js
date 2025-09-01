@@ -13,8 +13,9 @@
     let videoPlayerTimeComments = []; // Store all comments for video player time mode
     let videoTimeInterval = null; // Interval for checking video time
     let lastCheckedTime = -1; // Last checked video time
+    let previousVideoTime = -1; // Previous video time to detect rewinding
     let activeToasts = []; // Track active toast notifications
-    let shownTimestamps = new Set(); // Track which timestamps have been shown to prevent duplicates
+    let shownTimestamps = new Map(); // Track last shown time for timestamps (timestampKey -> lastShownTime)
     let toastTimeout = 10; // Toast display duration in seconds (default: 10)
     const MAX_RETRIES = 5;
     
@@ -199,6 +200,24 @@
         });
     }
     
+    // Extract timestamp seconds from a timestamp key (format: "timestamp-commentId")
+    function parseTimestampFromKey(key) {
+        try {
+            const timestampPart = key.split('-')[0]; // Get the timestamp part before the first dash
+            const parts = timestampPart.split(':');
+            if (parts.length !== 2) return 0;
+            
+            const minutes = parseInt(parts[0]);
+            const seconds = parseInt(parts[1]);
+            if (isNaN(minutes) || isNaN(seconds)) return 0;
+            
+            return minutes * 60 + seconds;
+        } catch (error) {
+            console.error('Error parsing timestamp from key:', key, error);
+            return 0;
+        }
+    }
+    
     // Check if timestamp matches current video time
     function isTimestampRelevant(timestamp, currentTime) {
         // Parse timestamp format (e.g., "1:30" -> 90 seconds)
@@ -239,6 +258,8 @@
         // Reset tracking for fresh start
         shownTimestamps.clear();
         lastCheckedTime = -1;
+        previousVideoTime = -1;
+        previousVideoTime = -1;
         
         console.log('Starting video time monitoring with', videoPlayerTimeComments.length, 'comments loaded');
         
@@ -257,7 +278,24 @@
                 return;
             }
             
+            // Detect significant rewinding (more than 10 seconds backward)
+            const hasRewound = previousVideoTime > 0 && (previousVideoTime - currentTimeRounded) > 10;
+            
+            // If rewound significantly, clear some old timestamp tracking to allow re-showing
+            if (hasRewound) {
+                console.log(`Detected rewinding from ${formatTimestamp(previousVideoTime)} to ${formatTimestamp(currentTimeRounded)}, clearing old timestamp tracking`);
+                // Clear timestamps that are ahead of current time (user rewound past them)
+                for (const [key, lastShownTime] of shownTimestamps.entries()) {
+                    const timestampSeconds = parseTimestampFromKey(key);
+                    if (timestampSeconds > currentTimeRounded) {
+                        shownTimestamps.delete(key);
+                    }
+                }
+            }
+            
             lastCheckedTime = currentTimeRounded;
+            previousVideoTime = currentTimeRounded;
+            
             console.log(`Checking for relevant comments at time: ${formatTimestamp(currentTimeRounded)}`);
             
             // Find comments with timestamps relevant to current time
@@ -282,18 +320,25 @@
                         // Create unique key for this timestamp + comment combination
                         const timestampKey = `${relevantTimestamp}-${comment.id}`;
                         
-                        // Check if we haven't already shown this specific timestamp for this comment
-                        if (!shownTimestamps.has(timestampKey)) {
+                        // Check if we can show this timestamp again
+                        const lastShownTime = shownTimestamps.get(timestampKey);
+                        const currentTimeMs = Date.now();
+                        const timeSinceLastShown = lastShownTime ? (currentTimeMs - lastShownTime) : Infinity;
+                        const canShowAgain = !lastShownTime || timeSinceLastShown > 30000; // 30 seconds cooldown
+                        
+                        if (canShowAgain) {
                             const toast = createToast(comment, relevantTimestamp);
                             if (toast) {
                                 toast.setAttribute('data-comment-id', comment.id);
                                 toast.setAttribute('data-timestamp', relevantTimestamp);
                                 
-                                // Mark this timestamp as shown
-                                shownTimestamps.add(timestampKey);
+                                // Update the last shown time
+                                shownTimestamps.set(timestampKey, currentTimeMs);
                                 
                                 console.log(`Created toast for ${relevantTimestamp}: ${comment.username}`);
                             }
+                        } else {
+                            console.log(`Skipping toast for ${relevantTimestamp} (shown ${Math.round(timeSinceLastShown/1000)}s ago)`);
                         }
                     }
                 });
@@ -317,6 +362,7 @@
         // Reset shown timestamps tracking
         shownTimestamps.clear();
         lastCheckedTime = -1;
+        previousVideoTime = -1;
         
         console.log('Stopped video time monitoring');
     }
