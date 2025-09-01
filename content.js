@@ -17,6 +17,7 @@
     let activeToasts = []; // Track active toast notifications
     let shownTimestamps = new Map(); // Track last shown time for timestamps (timestampKey -> lastShownTime)
     let toastTimeout = 10; // Toast display duration in seconds (default: 10)
+    let currentToastTheme = 'default'; // Current toast theme (default: 'default')
     const MAX_RETRIES = 5;
     
     // Initialize the extension
@@ -32,10 +33,11 @@
             console.log('YouTube Comment Tracker initialized for video:', currentVideoId);
             
             // Get the target username from storage
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'toastTimeout']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'toastTimeout', 'toastTheme']);
             targetUsername = result.targetUsername || '';
             currentSortOrder = result.sortOrder || 'top';
             toastTimeout = result.toastTimeout || 10;
+            currentToastTheme = result.toastTheme || 'default';
             
             // Create overlay (but hide it if in video player time mode)
             createCommentOverlay();
@@ -115,11 +117,11 @@
     // Create and manage toast notifications
     function createToast(comment, timestamp) {
         const toast = document.createElement('div');
-        toast.className = 'yt-timestamp-toast';
+        toast.className = `youtube-comment-toast theme-${currentToastTheme}`;
         toast.innerHTML = `
             <div class="toast-header">
                 <span class="toast-timestamp">${timestamp}</span>
-                <span class="toast-likes">👍 ${comment.likes}</span>
+                <span class="toast-likes">❤ ${comment.likes}</span>
             </div>
             <div class="toast-author">@${comment.username}</div>
             <div class="toast-content">${comment.text.substring(0, 200)}${comment.text.length > 200 ? '...' : ''}</div>
@@ -134,9 +136,6 @@
         // Add to active toasts array
         activeToasts.push(toast);
         
-        // Animate in
-        setTimeout(() => toast.classList.add('toast-visible'), 10);
-        
         // Auto remove after configured timeout
         setTimeout(() => {
             removeToast(toast);
@@ -150,17 +149,15 @@
     // Position toast in top-right, stacking them vertically
     function positionToast(toast) {
         const topMargin = 20;
-        const rightMargin = 20;
-        const toastHeight = 120; // Estimated toast height
+        const toastHeight = 100; // Estimated toast height
         const spacing = 10;
         
         // Calculate vertical position based on existing toasts
         const verticalOffset = activeToasts.length * (toastHeight + spacing);
         
-        toast.style.position = 'fixed';
+        // The toast-themes.css handles base positioning, we just adjust for stacking
         toast.style.top = `${topMargin + verticalOffset}px`;
-        toast.style.right = `${rightMargin}px`;
-        toast.style.zIndex = '10001';
+        toast.style.zIndex = `${10000 + activeToasts.length}`;
     }
     
     // Remove toast and reposition remaining toasts
@@ -173,8 +170,8 @@
             activeToasts.splice(index, 1);
         }
         
-        // Animate out
-        toast.classList.add('toast-removing');
+        // Animate out using the hiding class from toast-themes.css
+        toast.classList.add('hiding');
         
         setTimeout(() => {
             if (toast.parentNode) {
@@ -189,13 +186,14 @@
     // Reposition all active toasts
     function repositionToasts() {
         const topMargin = 20;
-        const toastHeight = 120;
+        const toastHeight = 100;
         const spacing = 10;
         
         activeToasts.forEach((toast, index) => {
             if (toast && toast.parentNode) {
                 const verticalOffset = index * (toastHeight + spacing);
                 toast.style.top = `${topMargin + verticalOffset}px`;
+                toast.style.zIndex = `${10000 + index}`;
             }
         });
     }
@@ -1211,15 +1209,16 @@
     // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'settingsUpdated') {
-            const { username, sortOrder, apiKey, toastTimeout: newToastTimeout } = request.settings;
+            const { username, sortOrder, apiKey, toastTimeout: newToastTimeout, toastTheme } = request.settings;
             
-            console.log('Settings updated from popup:', { username, sortOrder, apiKey, toastTimeout: newToastTimeout });
+            console.log('Settings updated from popup:', { username, sortOrder, apiKey, toastTimeout: newToastTimeout, toastTheme });
             
             // Update current settings
             const oldSortOrder = currentSortOrder;
             targetUsername = username || '';
             currentSortOrder = sortOrder || 'top';
             toastTimeout = newToastTimeout || 10;
+            currentToastTheme = toastTheme || 'default';
             
             // Update overlay title
             if (commentContainer) {

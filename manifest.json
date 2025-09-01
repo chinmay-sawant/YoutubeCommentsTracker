@@ -19,7 +19,7 @@
     {
       "matches": ["https://www.youtube.com/watch*"],
       "js": ["content.js"],
-      "css": ["styles.css"],
+      "css": ["styles.css", "toast-themes.css"],
       "run_at": "document_idle"
     }
   ],

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sortSelect = document.getElementById('sort-select');
     const apiKeyInput = document.getElementById('api-key-input');
     const toastTimeoutInput = document.getElementById('toast-timeout-input');
+    const themeSelect = document.getElementById('theme-select');
     const saveBtn = document.getElementById('save-btn');
     const clearBtn = document.getElementById('clear-btn');
     const statusMessage = document.getElementById('status-message');
@@ -36,16 +37,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load current settings from storage
     async function loadCurrentSettings() {
         try {
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme']);
             const username = result.targetUsername || '';
             const sortOrder = result.sortOrder || 'top';
             const apiKey = result.apiKey || '';
             const toastTimeout = result.toastTimeout || 10;
+            const toastTheme = result.toastTheme || 'default';
             
             usernameInput.value = username;
             sortSelect.value = sortOrder;
             apiKeyInput.value = apiKey;
             toastTimeoutInput.value = toastTimeout;
+            themeSelect.value = toastTheme;
             updateCurrentTarget(); // Use the new function to set proper target text
             
             if (username) {
@@ -91,6 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sortOrder = sortSelect.value;
         const apiKey = apiKeyInput.value.trim();
         const toastTimeout = parseInt(toastTimeoutInput.value) || 10;
+        const toastTheme = themeSelect.value;
         
         // Validate username
         if (username && username.length < 2) {
@@ -135,14 +139,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 targetUsername: username,
                 sortOrder: sortOrder,
                 apiKey: apiKey,
-                toastTimeout: toastTimeout
+                toastTimeout: toastTimeout,
+                toastTheme: toastTheme
             });
             
             // Update current username display
             updateCurrentTarget();
             
             // Notify content script about settings change
-            notifyContentScript({ username, sortOrder, apiKey, toastTimeout });
+            notifyContentScript({ username, sortOrder, apiKey, toastTimeout, toastTheme });
             
             showStatus('Settings saved successfully!', 'success');
             
@@ -167,11 +172,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clear settings
     async function clearSettings() {
         try {
-            await chrome.storage.sync.remove(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout']);
+            await chrome.storage.sync.remove(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme']);
             usernameInput.value = '';
             sortSelect.value = 'top'; // Reset to default
             apiKeyInput.value = '';
             toastTimeoutInput.value = '10'; // Reset to default
+            themeSelect.value = 'default'; // Reset to default theme
             updateCurrentTarget(); // Update the display
             showStatus('Settings cleared', 'success');
             

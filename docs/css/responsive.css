@@ -192,7 +192,7 @@
 
   /* Theme demos responsive */
   .themes-demo {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
@@ -201,8 +201,7 @@
   }
 
   .toast-mini {
-    font-size: 0.65rem;
-    padding: 4px 8px;
-    min-width: 60px;
+    font-size: 0.6rem;
+    padding: 4px 6px;
   }
 }

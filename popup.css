@@ -79,7 +79,8 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
-.sort-select {
+.sort-select,
+.theme-select {
   width: 100%;
   padding: 12px 16px;
   border: 2px solid #e0e0e0;
@@ -90,14 +91,16 @@ body {
   cursor: pointer;
 }
 
-.sort-select:focus {
+.sort-select:focus,
+.theme-select:focus {
   outline: none;
   border-color: #ff6b6b;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
-.sort-select option {
+.sort-select option,
+.theme-select option {
   padding: 8px;
   background: #ffffff;
   color: #333;

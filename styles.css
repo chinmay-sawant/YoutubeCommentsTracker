@@ -317,6 +317,7 @@
 }
 
 /* Toast notification styles */
+/* OLD TOAST STYLES - COMMENTED OUT - NOW USING toast-themes.css
 .yt-timestamp-toast {
   position: fixed;
   width: 320px;
@@ -382,8 +383,9 @@
   font-size: 12px;
   word-wrap: break-word;
 }
+*/
 
-/* Responsive toast adjustments */
+/* Responsive toast adjustments - COMMENTED OUT - NOW USING toast-themes.css
 @media (max-width: 768px) {
   .yt-timestamp-toast {
     width: 280px;
@@ -398,3 +400,4 @@
     left: 20px !important;
   }
 }
+*/
