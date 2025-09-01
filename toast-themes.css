@@ -62,6 +62,23 @@
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.toast-timestamp:hover {
+  background: rgba(255, 107, 107, 1);
+  transform: scale(1.05);
+}
+
+.toast-timestamp:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.toast-timestamp:active {
+  transform: scale(0.95);
 }
 
 .toast-likes {

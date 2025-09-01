@@ -98,6 +98,17 @@
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
     
+    // Convert timestamp format to seconds (e.g., "1:05" -> 65)
+    function parseTimestampToSeconds(timestamp) {
+        try {
+            const [minutes, seconds] = timestamp.split(':').map(Number);
+            return minutes * 60 + seconds;
+        } catch (error) {
+            console.error('Error parsing timestamp:', timestamp, error);
+            return 0;
+        }
+    }
+    
     // Generate systematic timestamp patterns for the entire video duration
     function generateTimeRangeStrings(currentTime, duration) {
         const timePatterns = [];
@@ -125,9 +136,13 @@
     function createToast(comment, timestamp) {
         const toast = document.createElement('div');
         toast.className = `youtube-comment-toast theme-${currentToastTheme}`;
+        
+        // Convert timestamp to seconds for seeking
+        const timestampSeconds = parseTimestampToSeconds(timestamp);
+        
         toast.innerHTML = `
             <div class="toast-header">
-                <span class="toast-timestamp">${timestamp}</span>
+                <span class="toast-timestamp timestamp-link" data-timestamp="${timestampSeconds}" tabindex="0">${timestamp}</span>
                 <span class="toast-likes">❤ ${comment.likes}</span>
             </div>
             <div class="toast-author">@${comment.username}</div>
@@ -136,11 +151,14 @@
         
         // Make toast clickable with visual feedback
         toast.style.cursor = 'pointer';
-        toast.title = `Click to extend display time by ${toastExtensionTime} seconds`;
+        toast.title = `Click timestamp to seek to ${timestamp} and extend toast | Click elsewhere to extend display time by ${toastExtensionTime} seconds`;
         
-        // Add click event to extend toast display time
-        toast.addEventListener('click', () => {
-            extendToastTime(toast);
+        // Add click event to extend toast display time (but not on timestamp)
+        toast.addEventListener('click', (e) => {
+            // Don't extend if clicking on timestamp
+            if (!e.target.classList.contains('timestamp-link')) {
+                extendToastTime(toast);
+            }
         });
         
         // Add hover effects
@@ -152,6 +170,45 @@
         toast.addEventListener('mouseleave', () => {
             toast.style.transform = 'scale(1)';
         });
+        
+        // Add click handler for timestamp
+        const timestampElement = toast.querySelector('.toast-timestamp');
+        if (timestampElement) {
+            timestampElement.title = `Click to seek video to ${timestamp} and extend toast`;
+            timestampElement.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent toast extension click
+                const timestampValue = parseInt(timestampElement.getAttribute('data-timestamp'));
+                seekToTimestamp(timestampValue);
+                
+                // Also extend the toast display time
+                extendToastTime(toast);
+                
+                // Visual feedback for timestamp click
+                timestampElement.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                setTimeout(() => {
+                    timestampElement.style.backgroundColor = '';
+                }, 200);
+            });
+            
+            // Add keyboard support for timestamp
+            timestampElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const timestampValue = parseInt(timestampElement.getAttribute('data-timestamp'));
+                    seekToTimestamp(timestampValue);
+                    
+                    // Also extend the toast display time
+                    extendToastTime(toast);
+                    
+                    // Visual feedback for timestamp click
+                    timestampElement.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                    setTimeout(() => {
+                        timestampElement.style.backgroundColor = '';
+                    }, 200);
+                }
+            });
+        }
         
         // Position toast
         positionToast(toast);
