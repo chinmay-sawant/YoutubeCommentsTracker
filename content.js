@@ -29,8 +29,9 @@
             console.log('YouTube Comment Tracker initialized for video:', currentVideoId);
             
             // Get the target username from storage
-            const result = await chrome.storage.sync.get(['targetUsername']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder']);
             targetUsername = result.targetUsername || '';
+            currentSortOrder = result.sortOrder || 'top';
             
             // Always create overlay to show status
             createCommentOverlay();
@@ -603,14 +604,6 @@
                 <span class="yt-tracker-title">${targetUsername ? `Tracking: ${targetUsername}` : 'Comment Tracker'}</span>
                 <button class="yt-tracker-close" title="Close tracker">×</button>
             </div>
-            <div class="yt-tracker-controls">
-                <select class="yt-sort-dropdown" id="comment-sort-select">
-                    <option value="top">Top Comments (with timestamps)</option>
-                    <option value="top-no-timestamps">Top Comments (without timestamps)</option>
-                    <option value="newest">Newest Comments</option>
-                    <option value="video-player-time">Video Player Time</option>
-                </select>
-            </div>
             <div class="yt-tracker-content">
                 <div class="yt-tracker-status">Loading comments...</div>
             </div>
@@ -626,11 +619,6 @@
         closeBtn.addEventListener('click', () => {
             commentContainer.style.display = 'none';
         });
-        
-        // Add sort dropdown functionality
-        const sortDropdown = commentContainer.querySelector('#comment-sort-select');
-        sortDropdown.value = currentSortOrder;
-        sortDropdown.addEventListener('change', handleSortChange);
         
         // Make container draggable
         makeDraggable(commentContainer);
@@ -675,35 +663,6 @@
             attributes: true,
             attributeFilter: ['class']
         });
-    }
-    
-    // Handle sort dropdown change
-    async function handleSortChange(event) {
-        const newSortOrder = event.target.value;
-        console.log('Sort order changed to:', newSortOrder);
-        
-        if (newSortOrder === currentSortOrder) return;
-        
-        // If switching away from video-player-time, stop monitoring
-        if (currentSortOrder === 'video-player-time' && newSortOrder !== 'video-player-time') {
-            stopVideoTimeMonitoring();
-        }
-        
-        currentSortOrder = newSortOrder;
-        
-        // Clear existing comments and reload with new sort order
-        clearComments();
-        processedComments.clear();
-        nextPageToken = null;
-        commentsLoaded = false;
-        
-        // Handle video player time sorting differently
-        if (newSortOrder === 'video-player-time') {
-            await loadCommentsForVideoPlayerTime();
-        } else {
-            // Reload comments with new sort order
-            await loadCommentsFromAPI();
-        }
     }
     
     // Clear all comments from the overlay
@@ -1154,5 +1113,50 @@
             }
         }
     }).observe(document, { subtree: true, childList: true });
+    
+    // Listen for messages from popup
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === 'settingsUpdated') {
+            const { username, sortOrder } = request.settings;
+            
+            console.log('Settings updated from popup:', { username, sortOrder });
+            
+            // Update current settings
+            const oldSortOrder = currentSortOrder;
+            targetUsername = username || '';
+            currentSortOrder = sortOrder || 'top';
+            
+            // Update overlay title
+            if (commentContainer) {
+                const titleSpan = commentContainer.querySelector('.yt-tracker-title');
+                if (titleSpan) {
+                    titleSpan.textContent = targetUsername ? `Tracking: ${targetUsername}` : 'Comment Tracker';
+                }
+                
+                // If sort order changed, reload comments
+                if (oldSortOrder !== currentSortOrder) {
+                    // If switching away from video-player-time, stop monitoring
+                    if (oldSortOrder === 'video-player-time' && currentSortOrder !== 'video-player-time') {
+                        stopVideoTimeMonitoring();
+                    }
+                    
+                    // Clear and reload with new sort order
+                    clearComments();
+                    processedComments.clear();
+                    nextPageToken = null;
+                    commentsLoaded = false;
+                    
+                    // Handle video player time sorting differently
+                    if (currentSortOrder === 'video-player-time') {
+                        loadCommentsForVideoPlayerTime();
+                    } else {
+                        loadCommentsFromAPI();
+                    }
+                }
+            }
+            
+            sendResponse({ status: 'success' });
+        }
+    });
     
 })();

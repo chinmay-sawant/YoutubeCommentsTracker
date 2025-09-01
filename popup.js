@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
     const usernameInput = document.getElementById('username-input');
+    const sortSelect = document.getElementById('sort-select');
     const saveBtn = document.getElementById('save-btn');
     const clearBtn = document.getElementById('clear-btn');
     const statusMessage = document.getElementById('status-message');
@@ -27,10 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load current settings from storage
     async function loadCurrentSettings() {
         try {
-            const result = await chrome.storage.sync.get(['targetUsername']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder']);
             const username = result.targetUsername || '';
+            const sortOrder = result.sortOrder || 'top';
             
             usernameInput.value = username;
+            sortSelect.value = sortOrder;
             currentUsername.textContent = username || 'Timestamp mode';
             
             if (username) {
@@ -45,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Save settings to storage
     async function saveSettings() {
         const username = usernameInput.value.trim();
+        const sortOrder = sortSelect.value;
         
         // Allow empty username for timestamp-only mode
         if (username && username.length < 2) {
@@ -71,16 +75,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             // Save to storage
-            await chrome.storage.sync.set({ targetUsername: username });
+            await chrome.storage.sync.set({ 
+                targetUsername: username,
+                sortOrder: sortOrder
+            });
             
             // Update current username display
             currentUsername.textContent = username || 'Timestamp mode';
             
-            // Show success message
-            const message = username ? 
-                'Settings saved! Tracking user and timestamps.' :
-                'Settings saved! Tracking timestamp comments only.';
-            showStatus(message, 'success');
+            // Notify content script about settings change
+            notifyContentScript({ username, sortOrder });
+            
+            showStatus('Settings saved successfully!', 'success');
             
             // Update button text temporarily
             const originalText = saveBtn.textContent;
@@ -94,15 +100,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
         } catch (error) {
             console.error('Error saving settings:', error);
-            showStatus('Error saving settings. Please try again.', 'error');
+            showStatus('Error saving settings', 'error');
         }
     }
     
     // Clear settings
     async function clearSettings() {
         try {
-            await chrome.storage.sync.remove(['targetUsername']);
+            await chrome.storage.sync.remove(['targetUsername', 'sortOrder']);
             usernameInput.value = '';
+            sortSelect.value = 'top'; // Reset to default
             currentUsername.textContent = 'Timestamp mode';
             showStatus('Settings cleared', 'success');
             
@@ -119,6 +126,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error clearing settings:', error);
             showStatus('Error clearing settings', 'error');
+        }
+    }
+    
+    // Notify content script about settings change
+    async function notifyContentScript(settings) {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab && tab.url && tab.url.includes('youtube.com/watch')) {
+                chrome.tabs.sendMessage(tab.id, {
+                    action: 'settingsUpdated',
+                    settings: settings
+                });
+            }
+        } catch (error) {
+            console.log('Could not notify content script:', error);
         }
     }
     

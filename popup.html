@@ -30,6 +30,23 @@
           </small>
         </div>
 
+        <div class="input-group">
+          <label for="sort-select" class="input-label">
+            Comment Sorting:
+          </label>
+          <select id="sort-select" class="sort-select">
+            <option value="top">Top Comments (with timestamps)</option>
+            <option value="top-no-timestamps">
+              Top Comments (without timestamps)
+            </option>
+            <option value="newest">Newest Comments</option>
+            <option value="video-player-time">Video Player Time</option>
+          </select>
+          <small class="input-help">
+            Choose how comments are sorted and displayed
+          </small>
+        </div>
+
         <div class="button-group">
           <button id="save-btn" class="btn btn-primary">Save Settings</button>
           <button id="clear-btn" class="btn btn-secondary">Clear</button>
@@ -47,13 +64,23 @@
           <h3>How to use:</h3>
           <ol>
             <li>Enter the username you want to track (optional)</li>
+            <li>Choose your preferred comment sorting method</li>
             <li>Click "Save Settings"</li>
             <li>Navigate to any YouTube video</li>
             <li>
-              The overlay will show comments from that user AND any comments
-              with timestamps (like "0:19")
+              The overlay will show comments based on your selected sorting:
+              <ul>
+                <li>
+                  <strong>Top Comments:</strong> Most liked comments
+                  with/without timestamps
+                </li>
+                <li><strong>Newest Comments:</strong> Most recent comments</li>
+                <li>
+                  <strong>Video Player Time:</strong> Live toasts based on video
+                  progress
+                </li>
+              </ul>
             </li>
-            <li>Leave username empty to see only timestamp comments</li>
           </ol>
         </div>
 
