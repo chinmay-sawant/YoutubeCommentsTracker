@@ -1,7 +1,18 @@
 // YouTube Comment Tracker - Background Service Worker
 // This handles secure API calls to YouTube Data API
 
-const YOUTUBE_API_KEY = "YOUR_API_KEY"; // Replace with your actual API key
+const DEFAULT_YOUTUBE_API_KEY = "YOUR_API_KEY"; // Fallback API key
+
+// Get API key from storage or use default
+async function getApiKey() {
+    try {
+        const result = await chrome.storage.sync.get(['apiKey']);
+        return result.apiKey || DEFAULT_YOUTUBE_API_KEY;
+    } catch (error) {
+        console.error('Error getting API key from storage:', error);
+        return DEFAULT_YOUTUBE_API_KEY;
+    }
+}
 
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -30,6 +41,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Fetch comments from YouTube API
 async function fetchYouTubeComments(videoId, pageToken = null, sortOrder = 'relevance') {
     try {
+        const YOUTUBE_API_KEY = await getApiKey();
+        
         // Map sort order to YouTube API parameter
         let apiOrder = 'relevance';
         if (sortOrder === 'newest') {
@@ -77,6 +90,7 @@ async function fetchYouTubeComments(videoId, pageToken = null, sortOrder = 'rele
 // Fetch video details
 async function fetchVideoDetails(videoId) {
     try {
+        const YOUTUBE_API_KEY = await getApiKey();
         const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${YOUTUBE_API_KEY}`;
         
         const response = await fetch(apiUrl);

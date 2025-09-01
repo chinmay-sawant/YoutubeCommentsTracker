@@ -47,6 +47,48 @@
           </small>
         </div>
 
+        <div class="input-group">
+          <label for="api-key-input" class="input-label">
+            YouTube API Key:
+          </label>
+          <input
+            type="password"
+            id="api-key-input"
+            class="api-key-input"
+            placeholder="Enter your YouTube Data API v3 key"
+            maxlength="100"
+          />
+          <small class="input-help">
+            <a
+              href="https://console.developers.google.com/"
+              target="_blank"
+              class="help-link"
+              >Get API key</a
+            >
+            | Your API key is stored securely and only used for YouTube API
+            calls
+          </small>
+        </div>
+
+        <div class="input-group">
+          <label for="toast-timeout-input" class="input-label">
+            Toast Display Duration (seconds):
+          </label>
+          <input
+            type="number"
+            id="toast-timeout-input"
+            class="toast-timeout-input"
+            placeholder="10"
+            min="3"
+            max="60"
+            value="10"
+          />
+          <small class="input-help">
+            How long toasts remain visible (3-60 seconds). Only applies to Video
+            Player Time mode.
+          </small>
+        </div>
+
         <div class="button-group">
           <button id="save-btn" class="btn btn-primary">Save Settings</button>
           <button id="clear-btn" class="btn btn-secondary">Clear</button>
@@ -63,8 +105,13 @@
         <div class="instructions">
           <h3>How to use:</h3>
           <ol>
+            <li>
+              Enter your YouTube Data API v3 key (optional - uses default if
+              empty)
+            </li>
             <li>Enter the username you want to track (optional)</li>
             <li>Choose your preferred comment sorting method</li>
+            <li>Set toast display duration (for Video Player Time mode)</li>
             <li>Click "Save Settings"</li>
             <li>Navigate to any YouTube video</li>
             <li>

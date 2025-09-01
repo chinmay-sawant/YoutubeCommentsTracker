@@ -3,6 +3,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const usernameInput = document.getElementById('username-input');
     const sortSelect = document.getElementById('sort-select');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const toastTimeoutInput = document.getElementById('toast-timeout-input');
     const saveBtn = document.getElementById('save-btn');
     const clearBtn = document.getElementById('clear-btn');
     const statusMessage = document.getElementById('status-message');
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveBtn.addEventListener('click', saveSettings);
     clearBtn.addEventListener('click', clearSettings);
     sortSelect.addEventListener('change', updateCurrentTarget);
+    apiKeyInput.addEventListener('input', clearStatus);
+    toastTimeoutInput.addEventListener('input', clearStatus);
     usernameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             saveSettings();
@@ -32,12 +36,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load current settings from storage
     async function loadCurrentSettings() {
         try {
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout']);
             const username = result.targetUsername || '';
             const sortOrder = result.sortOrder || 'top';
+            const apiKey = result.apiKey || '';
+            const toastTimeout = result.toastTimeout || 10;
             
             usernameInput.value = username;
             sortSelect.value = sortOrder;
+            apiKeyInput.value = apiKey;
+            toastTimeoutInput.value = toastTimeout;
             updateCurrentTarget(); // Use the new function to set proper target text
             
             if (username) {
@@ -81,8 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function saveSettings() {
         const username = usernameInput.value.trim();
         const sortOrder = sortSelect.value;
+        const apiKey = apiKeyInput.value.trim();
+        const toastTimeout = parseInt(toastTimeoutInput.value) || 10;
         
-        // Allow empty username for timestamp-only mode
+        // Validate username
         if (username && username.length < 2) {
             showStatus('Username must be at least 2 characters (or leave empty for timestamp mode)', 'error');
             usernameInput.focus();
@@ -95,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        // Check for invalid characters (basic check)
+        // Check for invalid characters in username (basic check)
         if (username) {
             const invalidChars = /[<>\"'&]/;
             if (invalidChars.test(username)) {
@@ -105,18 +115,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         
+        // Validate API key
+        if (apiKey && apiKey.length < 10) {
+            showStatus('API key seems too short. Please check your API key.', 'error');
+            apiKeyInput.focus();
+            return;
+        }
+        
+        // Validate toast timeout
+        if (toastTimeout < 3 || toastTimeout > 60) {
+            showStatus('Toast timeout must be between 3 and 60 seconds', 'error');
+            toastTimeoutInput.focus();
+            return;
+        }
+        
         try {
             // Save to storage
             await chrome.storage.sync.set({ 
                 targetUsername: username,
-                sortOrder: sortOrder
+                sortOrder: sortOrder,
+                apiKey: apiKey,
+                toastTimeout: toastTimeout
             });
             
             // Update current username display
             updateCurrentTarget();
             
             // Notify content script about settings change
-            notifyContentScript({ username, sortOrder });
+            notifyContentScript({ username, sortOrder, apiKey, toastTimeout });
+            
+            showStatus('Settings saved successfully!', 'success');
             
             showStatus('Settings saved successfully!', 'success');
             
@@ -139,9 +167,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clear settings
     async function clearSettings() {
         try {
-            await chrome.storage.sync.remove(['targetUsername', 'sortOrder']);
+            await chrome.storage.sync.remove(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout']);
             usernameInput.value = '';
             sortSelect.value = 'top'; // Reset to default
+            apiKeyInput.value = '';
+            toastTimeoutInput.value = '10'; // Reset to default
             updateCurrentTarget(); // Update the display
             showStatus('Settings cleared', 'success');
             

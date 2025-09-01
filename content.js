@@ -14,6 +14,8 @@
     let videoTimeInterval = null; // Interval for checking video time
     let lastCheckedTime = -1; // Last checked video time
     let activeToasts = []; // Track active toast notifications
+    let shownTimestamps = new Set(); // Track which timestamps have been shown to prevent duplicates
+    let toastTimeout = 10; // Toast display duration in seconds (default: 10)
     const MAX_RETRIES = 5;
     
     // Initialize the extension
@@ -29,9 +31,10 @@
             console.log('YouTube Comment Tracker initialized for video:', currentVideoId);
             
             // Get the target username from storage
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'toastTimeout']);
             targetUsername = result.targetUsername || '';
             currentSortOrder = result.sortOrder || 'top';
+            toastTimeout = result.toastTimeout || 10;
             
             // Create overlay (but hide it if in video player time mode)
             createCommentOverlay();
@@ -85,48 +88,27 @@
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
     
-    // Generate time range strings based on current video time
+    // Generate systematic timestamp patterns for the entire video duration
     function generateTimeRangeStrings(currentTime, duration) {
-        const timeRanges = [];
+        const timePatterns = [];
         
-        // Add the full video range (0:00-end)
-        timeRanges.push(`0:00-${formatTimestamp(duration)}`);
-        
-        // Add current time specific ranges
-        if (currentTime > 0) {
-            // From start to current time
-            timeRanges.push(`0:00-${formatTimestamp(currentTime)}`);
-            
-            // Around current time (±30 seconds)
-            const startTime = Math.max(0, currentTime - 30);
-            const endTime = Math.min(duration, currentTime + 30);
-            timeRanges.push(`${formatTimestamp(startTime)}-${formatTimestamp(endTime)}`);
-            
-            // From current time to end
-            if (currentTime < duration) {
-                timeRanges.push(`${formatTimestamp(currentTime)}-${formatTimestamp(duration)}`);
-            }
+        // Generate individual timestamps for every 5 seconds (optimized for API search)
+        // This covers all possible timestamp mentions efficiently
+        for (let i = 0; i <= Math.ceil(duration); i += 5) {
+            const timestamp = Math.min(i, duration);
+            timePatterns.push(formatTimestamp(timestamp));
         }
         
-        // Add common timestamp patterns that might appear in comments
-        const intervals = [10, 30, 60, 120, 300]; // 10s, 30s, 1m, 2m, 5m intervals
-        intervals.forEach(interval => {
-            for (let i = 0; i < duration; i += interval) {
-                const start = i;
-                const end = Math.min(i + interval, duration);
-                if (start < end) {
-                    timeRanges.push(`${formatTimestamp(start)}-${formatTimestamp(end)}`);
-                    // Also add individual timestamps
-                    timeRanges.push(formatTimestamp(start));
-                    if (end < duration) {
-                        timeRanges.push(formatTimestamp(end));
-                    }
-                }
-            }
-        });
+        // Add some common range patterns that might appear in comments
+        timePatterns.push(`0:00-${formatTimestamp(duration)}`); // Full video
         
-        // Remove duplicates and return
-        return [...new Set(timeRanges)];
+        // Add minute markers for longer videos
+        for (let minutes = 1; minutes <= Math.floor(duration / 60); minutes++) {
+            timePatterns.push(`${minutes}:00`);
+        }
+        
+        console.log(`Generated ${timePatterns.length} timestamp patterns for ${formatTimestamp(duration)} video`);
+        return timePatterns;
     }
     
     // Create and manage toast notifications
@@ -154,10 +136,10 @@
         // Animate in
         setTimeout(() => toast.classList.add('toast-visible'), 10);
         
-        // Auto remove after 10 seconds
+        // Auto remove after configured timeout
         setTimeout(() => {
             removeToast(toast);
-        }, 10000);
+        }, toastTimeout * 1000); // Convert seconds to milliseconds
         
         console.log(`Created toast for timestamp ${timestamp}:`, comment.username);
         
@@ -229,8 +211,9 @@
         
         const timestampSeconds = minutes * 60 + seconds;
         
-        // Check if current time is within ±5 seconds of the timestamp
-        return Math.abs(currentTime - timestampSeconds) <= 5;
+        // Show toast only when video time reaches or passes the timestamp (within 3 seconds)
+        // This prevents showing toasts too early
+        return currentTime >= timestampSeconds && currentTime <= timestampSeconds + 3;
     }
     
     // Extract timestamps from comment text
@@ -253,6 +236,10 @@
             clearInterval(videoTimeInterval);
         }
         
+        // Reset tracking for fresh start
+        shownTimestamps.clear();
+        lastCheckedTime = -1;
+        
         console.log('Starting video time monitoring with', videoPlayerTimeComments.length, 'comments loaded');
         
         videoTimeInterval = setInterval(() => {
@@ -265,8 +252,8 @@
             const { currentTime } = getVideoPlayerTime();
             const currentTimeRounded = Math.floor(currentTime);
             
-            // Only check every 5 seconds to avoid spam
-            if (Math.abs(currentTimeRounded - lastCheckedTime) < 5) {
+            // Check every second, but only log and process if time actually changed
+            if (currentTimeRounded === lastCheckedTime) {
                 return;
             }
             
@@ -292,22 +279,26 @@
                     );
                     
                     if (relevantTimestamp) {
-                        // Check if we haven't already shown this comment recently
-                        const recentToasts = activeToasts.filter(toast => 
-                            toast.getAttribute('data-comment-id') === comment.id
-                        );
+                        // Create unique key for this timestamp + comment combination
+                        const timestampKey = `${relevantTimestamp}-${comment.id}`;
                         
-                        if (recentToasts.length === 0) {
+                        // Check if we haven't already shown this specific timestamp for this comment
+                        if (!shownTimestamps.has(timestampKey)) {
                             const toast = createToast(comment, relevantTimestamp);
                             if (toast) {
                                 toast.setAttribute('data-comment-id', comment.id);
+                                toast.setAttribute('data-timestamp', relevantTimestamp);
+                                
+                                // Mark this timestamp as shown
+                                shownTimestamps.add(timestampKey);
+                                
+                                console.log(`Created toast for ${relevantTimestamp}: ${comment.username}`);
                             }
-                            console.log(`Created toast for ${relevantTimestamp}: ${comment.username}`);
                         }
                     }
                 });
             
-        }, 2000); // Check every 2 seconds
+        }, 1000); // Check every 1 second
         
         console.log('Started video time monitoring for toasts');
     }
@@ -322,6 +313,10 @@
         // Clear all active toasts
         activeToasts.forEach(toast => removeToast(toast));
         activeToasts = [];
+        
+        // Reset shown timestamps tracking
+        shownTimestamps.clear();
+        lastCheckedTime = -1;
         
         console.log('Stopped video time monitoring');
     }
@@ -427,33 +422,62 @@
                 return;
             }
             
-            updateOverlayStatus(`Loading comments for video time monitoring...`);
+            updateOverlayStatus(`Loading all comments for video time monitoring...`);
             
-            // Generate time range patterns based on current video state
-            const timePatterns = generateTimeRangeStrings(currentTime, duration);
+            // Fetch ALL comments once and process locally for better performance
+            console.log('Fetching all comments for video time monitoring...');
             
-            console.log('Generated time patterns for monitoring:', timePatterns.slice(0, 10));
-            
-            // Send message to background script to search comments by time patterns
             const response = await new Promise((resolve) => {
                 chrome.runtime.sendMessage({
-                    action: "searchCommentsByTime",
+                    action: "fetchComments",
                     videoId: currentVideoId,
-                    timePatterns: timePatterns
+                    pageToken: null,
+                    sortOrder: 'relevance'
                 }, resolve);
             });
             
             if (response.status === "success") {
-                const { comments } = response.data;
+                let allComments = response.data.comments;
+                
+                // Continue fetching additional pages to get more comments
+                let nextPageToken = response.data.nextPageToken;
+                let totalFetched = allComments.length;
+                const maxComments = 2000; // Reasonable limit
+                
+                while (nextPageToken && totalFetched < maxComments) {
+                    const pageResponse = await new Promise((resolve) => {
+                        chrome.runtime.sendMessage({
+                            action: "fetchComments",
+                            videoId: currentVideoId,
+                            pageToken: nextPageToken,
+                            sortOrder: 'relevance'
+                        }, resolve);
+                    });
+                    
+                    if (pageResponse.status === "success") {
+                        allComments.push(...pageResponse.data.comments);
+                        nextPageToken = pageResponse.data.nextPageToken;
+                        totalFetched = allComments.length;
+                        
+                        updateOverlayStatus(`Loading comments... (${totalFetched} loaded)`);
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Filter comments that contain timestamps
+                const timeRelatedComments = allComments.filter(comment => 
+                    hasTimestampPattern(comment.text)
+                );
                 
                 // Store comments for video time monitoring
-                videoPlayerTimeComments = comments;
+                videoPlayerTimeComments = timeRelatedComments;
                 
-                console.log(`Loaded ${comments.length} time-related comments for monitoring`);
+                console.log(`Loaded ${allComments.length} total comments, ${timeRelatedComments.length} contain timestamps`);
                 
                 // Clear the overlay and show monitoring status
                 clearComments();
-                updateOverlayStatus(`Video time monitoring active! Toasts will appear based on video progress.\n\nLoaded ${comments.length} time-related comments.`);
+                updateOverlayStatus(`Video time monitoring active! Toasts will appear based on video progress.\n\nLoaded ${timeRelatedComments.length} timestamp comments from ${allComments.length} total comments.`);
                 
                 // Start monitoring video time and showing toasts
                 startVideoTimeMonitoring();
@@ -1141,14 +1165,15 @@
     // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'settingsUpdated') {
-            const { username, sortOrder } = request.settings;
+            const { username, sortOrder, apiKey, toastTimeout: newToastTimeout } = request.settings;
             
-            console.log('Settings updated from popup:', { username, sortOrder });
+            console.log('Settings updated from popup:', { username, sortOrder, apiKey, toastTimeout: newToastTimeout });
             
             // Update current settings
             const oldSortOrder = currentSortOrder;
             targetUsername = username || '';
             currentSortOrder = sortOrder || 'top';
+            toastTimeout = newToastTimeout || 10;
             
             // Update overlay title
             if (commentContainer) {
