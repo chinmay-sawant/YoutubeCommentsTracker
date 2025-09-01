@@ -25,11 +25,6 @@ To use this extension with the YouTube Data API, you need to:
    - Each comment thread request costs about 5 units
    - The extension automatically handles rate limiting
 
-5. **Fallback Behavior:**
-   - If API requests fail, the extension falls back to DOM scraping
-   - This ensures the extension works even without API access
-   - DOM scraping is less reliable but doesn't require API quotas
-
 ## Example API Key Configuration:
 
 ```javascript
