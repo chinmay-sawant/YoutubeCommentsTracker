@@ -1,0 +1,227 @@
+/* YouTube Comment Tracker - Toast Themes */
+
+/* Base toast notification styles */
+.youtube-comment-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 350px;
+  min-height: 80px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: white;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  z-index: 10000;
+  animation: slideInToast 0.3s ease-out;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.youtube-comment-toast.hiding {
+  animation: slideOutToast 0.3s ease-in forwards;
+}
+
+@keyframes slideInToast {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToast {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.toast-timestamp {
+  background: rgba(255, 107, 107, 0.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.toast-timestamp:hover {
+  background: rgba(255, 107, 107, 1);
+  transform: scale(1.05);
+}
+
+.toast-timestamp:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.toast-timestamp:active {
+  transform: scale(0.95);
+}
+
+.toast-likes {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+}
+
+.toast-author {
+  color: #ff6b6b;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.toast-content {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Theme: Default */
+.youtube-comment-toast.theme-default {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 107, 107, 0.5);
+}
+
+.youtube-comment-toast.theme-default .toast-timestamp {
+  background: rgba(255, 107, 107, 0.8);
+}
+
+.youtube-comment-toast.theme-default .toast-author {
+  color: #ff6b6b;
+}
+
+/* Theme: Modern */
+.youtube-comment-toast.theme-modern {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.youtube-comment-toast.theme-modern .toast-timestamp {
+  background: rgba(102, 126, 234, 0.8);
+}
+
+.youtube-comment-toast.theme-modern .toast-author {
+  color: #667eea;
+}
+
+/* Theme: Minimal */
+.youtube-comment-toast.theme-minimal {
+  background: rgba(248, 250, 252, 0.95);
+  color: #334155;
+  border: 1px solid rgba(203, 213, 225, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.youtube-comment-toast.theme-minimal .toast-timestamp {
+  background: rgba(100, 116, 139, 0.8);
+  color: white;
+}
+
+.youtube-comment-toast.theme-minimal .toast-author {
+  color: #475569;
+}
+
+.youtube-comment-toast.theme-minimal .toast-content {
+  color: #475569;
+}
+
+.youtube-comment-toast.theme-minimal .toast-likes {
+  color: rgba(71, 85, 105, 0.7);
+}
+
+/* Theme: Colorful */
+.youtube-comment-toast.theme-colorful {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 107, 0.9),
+    rgba(102, 126, 234, 0.9)
+  );
+  border: none;
+  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+}
+
+.youtube-comment-toast.theme-colorful .toast-timestamp {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.youtube-comment-toast.theme-colorful .toast-author {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Theme: Glass */
+.youtube-comment-toast.theme-glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
+.youtube-comment-toast.theme-glass .toast-timestamp {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.youtube-comment-toast.theme-glass .toast-author {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Theme: Gaming */
+.youtube-comment-toast.theme-gaming {
+  background: rgba(0, 0, 0, 0.9);
+  color: #00ff7f;
+  border: 1px solid #00ff7f;
+  box-shadow: 0 0 15px rgba(0, 255, 127, 0.3);
+  font-family: "Courier New", monospace;
+}
+
+.youtube-comment-toast.theme-gaming .toast-timestamp {
+  background: rgba(0, 255, 127, 0.2);
+  color: #00ff7f;
+  border: 1px solid #00ff7f;
+}
+
+.youtube-comment-toast.theme-gaming .toast-author {
+  color: #00ff7f;
+  text-shadow: 0 0 5px rgba(0, 255, 127, 0.5);
+}
+
+.youtube-comment-toast.theme-gaming .toast-content {
+  color: #00ff7f;
+}
+
+.youtube-comment-toast.theme-gaming .toast-likes {
+  color: rgba(0, 255, 127, 0.7);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .youtube-comment-toast {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}

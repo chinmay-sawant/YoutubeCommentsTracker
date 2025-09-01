@@ -47,6 +47,89 @@
           </small>
         </div>
 
+        <div class="input-group">
+          <label for="api-key-input" class="input-label">
+            YouTube API Key:
+          </label>
+          <input
+            type="password"
+            id="api-key-input"
+            class="api-key-input"
+            placeholder="Enter your YouTube Data API v3 key"
+            maxlength="100"
+          />
+          <small class="input-help">
+            <a
+              href="https://console.developers.google.com/"
+              target="_blank"
+              class="help-link"
+              >Get API key</a
+            >
+            | Your API key is stored securely and only used for YouTube API
+            calls
+          </small>
+        </div>
+
+        <div class="input-group">
+          <label for="toast-timeout-input" class="input-label">
+            Toast Display Duration (seconds):
+          </label>
+          <input
+            type="number"
+            id="toast-timeout-input"
+            class="toast-timeout-input"
+            placeholder="10"
+            min="3"
+            max="60"
+            value="10"
+          />
+          <small class="input-help">
+            How long toasts remain visible (3-60 seconds). Only applies to Video
+            Player Time mode.
+          </small>
+        </div>
+
+        <div class="input-group">
+          <label for="toast-extension-select" class="input-label">
+            Toast Click Extension Time:
+          </label>
+          <select id="toast-extension-select" class="toast-extension-select">
+            <option value="5">5 seconds</option>
+            <option value="10" selected>10 seconds</option>
+            <option value="15">15 seconds</option>
+            <option value="20">20 seconds</option>
+            <option value="30">30 seconds</option>
+          </select>
+          <small class="input-help">
+            Additional time added when you click on a toast notification.
+          </small>
+        </div>
+
+        <div class="input-group">
+          <label for="theme-select" class="input-label"> Toast Theme: </label>
+          <select id="theme-select" class="theme-select">
+            <option value="default">
+              Default - Classic dark with red accents
+            </option>
+            <option value="modern">
+              Modern - Glass effect with subtle shadows
+            </option>
+            <option value="minimal">Minimal - Clean, understated design</option>
+            <option value="colorful">
+              Colorful - Vibrant gradient backgrounds
+            </option>
+            <option value="glass">
+              Glass - Ultra-transparent with blur effects
+            </option>
+            <option value="gaming">
+              Gaming - Retro green glow with monospace font
+            </option>
+          </select>
+          <small class="input-help">
+            Choose the visual style for toast notifications
+          </small>
+        </div>
+
         <div class="button-group">
           <button id="save-btn" class="btn btn-primary">Save Settings</button>
           <button id="clear-btn" class="btn btn-secondary">Clear</button>
@@ -63,8 +146,10 @@
         <div class="instructions">
           <h3>How to use:</h3>
           <ol>
+            <li>Enter your YouTube Data API v3 key (Required)</li>
             <li>Enter the username you want to track (optional)</li>
             <li>Choose your preferred comment sorting method</li>
+            <li>Set toast display duration (for Video Player Time mode)</li>
             <li>Click "Save Settings"</li>
             <li>Navigate to any YouTube video</li>
             <li>

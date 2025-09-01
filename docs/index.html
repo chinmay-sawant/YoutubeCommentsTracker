@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube User Comment Tracker - Chrome Extension</title>
+    <meta
+      name="description"
+      content="A powerful Chrome extension for trackin                    <li>
+                      <strong>API Integration:</strong> YouTube Data API v3 for reliable
+                      data fetching
+                    </li>
+                    <li>
+                      <strong>Performance Optimized:</strong> Minimal impact on
+                      video playback
+                    </li>mments with real-time notifications, smart filtering, and advanced display modes."
+    />
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/navigation.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/hero.css" />
+    <link rel="stylesheet" href="css/features.css" />
+    <link rel="stylesheet" href="css/sections.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Favicon -->
+    <link rel="icon" href="assets/logo.png" type="image/png" />
+  </head>
+  <body class="dark-mode">
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-brand">
+          <div class="brand-icon">
+            <img src="assets/logo.png" alt="YouTube Comment Tracker Logo" />
+          </div>
+          <span class="brand-text">YouTube Comment Tracker</span>
+        </div>
+        <div class="nav-menu" id="nav-menu">
+          <a href="#hero" class="nav-link">Home</a>
+          <a href="#story" class="nav-link">Story</a>
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#demo" class="nav-link">Demo</a>
+          <a href="#installation" class="nav-link">Install</a>
+          <a href="#support" class="nav-link">Support</a>
+          <div class="theme-toggle" id="theme-toggle" title="Toggle Dark Mode">
+            <span class="theme-icon">🌙</span>
+          </div>
+        </div>
+        <div class="nav-toggle" id="nav-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+      <div class="hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            <span class="highlight">Smart YouTube</span>
+            Comment Tracking
+          </h1>
+          <p class="hero-subtitle">
+            A powerful Chrome extension that displays live-updating comments
+            from specific users and timestamp references in a beautiful,
+            transparent overlay with real-time toast notifications.
+          </p>
+
+          <div class="hero-buttons">
+            <a href="#installation" class="btn btn-primary">
+              <span>📥</span>
+              Install Extension
+            </a>
+            <a href="#demo" class="btn btn-secondary">
+              <span>🎥</span>
+              View Demo
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-number">6</span>
+              <span class="stat-label">Toast Themes</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">3</span>
+              <span class="stat-label">Display Modes</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">API</span>
+              <span class="stat-label">Integrated</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="mockup-container">
+            <div class="browser-mockup">
+              <div class="browser-header">
+                <div class="browser-buttons">
+                  <div class="btn-close"></div>
+                  <div class="btn-minimize"></div>
+                  <div class="btn-maximize"></div>
+                </div>
+                <div class="browser-url">youtube.com/watch?v=example</div>
+              </div>
+              <div class="browser-content">
+                <div class="youtube-mockup">
+                  <div class="video-player">
+                    <div class="play-button">▶</div>
+                  </div>
+                  <div class="comment-overlay">
+                    <div class="overlay-header">
+                      <span>💬 Tracking: TechReviewer</span>
+                      <span>×</span>
+                    </div>
+                    <div class="comment-item">
+                      <div class="comment-meta">
+                        <span class="comment-author">TechReviewer</span>
+                        <span class="comment-type">👤⏰</span>
+                      </div>
+                      <div class="comment-text">
+                        Great explanation at
+                        <span class="timestamp">2:30</span>!
+                      </div>
+                    </div>
+                  </div>
+                  <div class="toast-notification">
+                    <div class="toast-header">
+                      <span class="toast-timestamp">2:30</span>
+                      <span class="toast-likes">❤ 42</span>
+                    </div>
+                    <div class="toast-author">TechReviewer</div>
+                    <div class="toast-content">
+                      This part explains everything perfectly!
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story Section -->
+    <section id="story" class="story">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">🎯 Why I Created This Extension</h2>
+          <p class="section-subtitle">
+            The story behind the extension and the problem it solves
+          </p>
+        </div>
+
+        <div class="story-content">
+          <div class="story-main">
+            <div class="story-problem">
+              <h3>The Problem</h3>
+              <p>
+                I love watching <strong>"Daily Dose Of Internet"</strong> on
+                YouTube where there are lots of funny moments, and I used to enjoy
+                looking at the comments. But the main issue for me was finding
+                relevant comments with respect to the timestamp where I was
+                actually watching in the video.
+              </p>
+              <div class="problem-visual">
+                <div class="problem-icon">😩</div>
+                <div class="problem-text">
+                  <strong>Before:</strong> Scroll through hundreds of comments,
+                  manually search for timestamps, miss the moment you're watching
+                </div>
+              </div>
+            </div>
+
+            <div class="story-solution">
+              <h3>The Solution</h3>
+              <p class="solution-highlight">
+                <strong>This extension solves that problem</strong> and provides
+                extensive customization options to enhance your YouTube commenting
+                experience!
+              </p>
+              <div class="solution-visual">
+                <div class="solution-icon">✨</div>
+                <div class="solution-text">
+                  <strong>After:</strong> Relevant comments appear automatically
+                  at the right time with beautiful toast notifications
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="story-features">
+            <div class="feature-card">
+              <div class="feature-icon">🎯</div>
+              <h4>Smart Detection</h4>
+              <p>Automatically finds timestamp references in comments</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⏰</div>
+              <h4>Real-time Sync</h4>
+              <p>Comments appear exactly when you reach the referenced time</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🎨</div>
+              <h4>Beautiful Themes</h4>
+              <p>6 customizable themes that blend seamlessly with YouTube</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⚡</div>
+              <h4>Click to Seek</h4>
+              <p>Click any timestamp to jump directly to that moment</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Carousel -->
+    <section id="features" class="features">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Powerful Features</h2>
+          <p class="section-subtitle">
+            Discover what makes our extension special
+          </p>
+        </div>
+
+        <div class="carousel-container">
+          <div class="carousel-wrapper">
+            <div class="carousel-slides" id="carousel-slides">
+              <!-- Slide 1: Smart Tracking -->
+              <div class="carousel-slide active">
+                <div class="feature-content">
+                  <div class="feature-icon">🎯</div>
+                  <h3 class="feature-title">Smart Comment Tracking</h3>
+                  <p class="feature-description">
+                    Track comments from specific users AND automatically detect
+                    timestamp references. Visual indicators show comment types:
+                    👤⏰ User+Timestamp, 👤 User Only, ⏰ Timestamp Only.
+                  </p>
+                  <ul class="feature-list">
+                    <li>
+                      User-specific filtering with exact username matching
+                    </li>
+                    <li>
+                      Automatic timestamp detection (0:19, 1:23, 10:45 formats)
+                    </li>
+                    <li>Dual mode operation for maximum flexibility</li>
+                    <li>Real-time comment classification and sorting</li>
+                  </ul>
+                </div>
+                <div class="feature-visual">
+                  <div class="demo-box">
+                    <div class="comment-demo">
+                      <div class="demo-comment user-timestamp">
+                        <span class="demo-type">👤⏰</span>
+                        <div class="demo-content">
+                          <strong>TechGuru:</strong> Amazing trick at
+                          <span class="demo-timestamp">3:45</span>!
+                        </div>
+                      </div>
+                      <div class="demo-comment user-only">
+                        <span class="demo-type">👤</span>
+                        <div class="demo-content">
+                          <strong>TechGuru:</strong> Thanks for this tutorial!
+                        </div>
+                      </div>
+                      <div class="demo-comment timestamp-only">
+                        <span class="demo-type">⏰</span>
+                        <div class="demo-content">
+                          <strong>Viewer123:</strong> At
+                          <span class="demo-timestamp">1:20</span> you can see
+                          the bug
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Slide 2: Display Modes -->
+              <div class="carousel-slide">
+                <div class="feature-content">
+                  <div class="feature-icon">🚀</div>
+                  <h3 class="feature-title">Advanced Display Modes</h3>
+                  <p class="feature-description">
+                    Choose from three powerful display modes to match your
+                    viewing style. From traditional overlays to real-time toast
+                    notifications.
+                  </p>
+                  <ul class="feature-list">
+                    <li>
+                      <strong>Traditional Overlay:</strong> Draggable comment
+                      feed
+                    </li>
+                    <li>
+                      <strong>Video Player Time:</strong> Real-time toast
+                      notifications
+                    </li>
+                    <li><strong>Hybrid Mode:</strong> Best of both worlds</li>
+                    <li>
+                      <strong>Rewind Support:</strong> Smart re-showing of
+                      comments
+                    </li>
+                  </ul>
+                </div>
+                <div class="feature-visual">
+                  <div class="demo-box">
+                    <div class="display-modes-demo">
+                      <div class="mode-option active-mode">
+                        <div class="mode-icon">📱</div>
+                        <div class="mode-name">Traditional Overlay</div>
+                      </div>
+                      <div class="mode-option">
+                        <div class="mode-icon">⏰</div>
+                        <div class="mode-name">Video Player Time</div>
+                      </div>
+                      <div class="mode-option">
+                        <div class="mode-icon">🔄</div>
+                        <div class="mode-name">Hybrid Mode</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Slide 3: Toast Themes -->
+              <div class="carousel-slide">
+                <div class="feature-content">
+                  <div class="feature-icon">🎨</div>
+                  <h3 class="feature-title">Beautiful Toast Themes</h3>
+                  <p class="feature-description">
+                    Customize your viewing experience with 6 stunning toast
+                    themes. Each theme features enhanced transparency and smooth
+                    animations.
+                  </p>
+                  <ul class="feature-list">
+                    <li>
+                      <strong>Default:</strong> Classic dark with red accents
+                    </li>
+                    <li>
+                      <strong>Modern:</strong> Glass effect with subtle shadows
+                    </li>
+                    <li><strong>Minimal:</strong> Clean, understated design</li>
+                    <li>
+                      <strong>Colorful:</strong> Vibrant gradient backgrounds
+                    </li>
+                    <li>
+                      <strong>Glass:</strong> Ultra-transparent with blur
+                      effects
+                    </li>
+                    <li>
+                      <strong>Gaming:</strong> Retro green glow with monospace
+                      font
+                    </li>
+                  </ul>
+                </div>
+                <div class="feature-visual">
+                  <div class="demo-box">
+                    <div class="themes-demo">
+                      <div class="theme-preview default-theme">
+                        <div class="theme-name">Default</div>
+                        <div class="toast-preview">
+                          <div class="toast-mini">2:30 | Great point!</div>
+                        </div>
+                      </div>
+                      <div class="theme-preview modern-theme">
+                        <div class="theme-name">Modern</div>
+                        <div class="toast-preview">
+                          <div class="toast-mini">1:45 | Love this!</div>
+                        </div>
+                      </div>
+                      <div class="theme-preview minimal-theme">
+                        <div class="theme-name">Minimal</div>
+                        <div class="toast-preview">
+                          <div class="toast-mini">3:20 | Awesome</div>
+                        </div>
+                      </div>
+                      <div class="theme-preview colorful-theme">
+                        <div class="theme-name">Colorful</div>
+                        <div class="toast-preview">
+                          <div class="toast-mini">5:15 | Amazing!</div>
+                        </div>
+                      </div>
+                      <div class="theme-preview glass-theme">
+                        <div class="theme-name">Glass</div>
+                        <div class="toast-preview">
+                          <div class="toast-mini">4:05 | Perfect!</div>
+                        </div>
+                      </div>
+                      <div class="theme-preview gaming-theme">
+                        <div class="theme-name">Gaming</div>
+                        <div class="toast-preview">
+                          <div class="toast-mini">2:50 | Epic!</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Slide 4: Technical Excellence -->
+              <div class="carousel-slide">
+                <div class="feature-content">
+                  <div class="feature-icon">🔧</div>
+                  <h3 class="feature-title">Technical Excellence</h3>
+                  <p class="feature-description">
+                    Built with modern web technologies and best practices.
+                    Efficient API usage, smart caching, and minimal performance
+                    impact.
+                  </p>
+                  <ul class="feature-list">
+                    <li>
+                      <strong>YouTube API Integration:</strong> Fast, reliable
+                      data fetching
+                    </li>
+                    <li>
+                      <strong>Smart Fallbacks:</strong> DOM scraping when API
+                      unavailable
+                    </li>
+                    <li>
+                      <strong>Performance Optimized:</strong> Minimal impact on
+                      video playback
+                    </li>
+                    <li>
+                      <strong>Security First:</strong> Manifest V3 compliant
+                    </li>
+                  </ul>
+                </div>
+                <div class="feature-visual">
+                  <div class="demo-box">
+                    <div class="tech-demo">
+                      <div class="tech-stat">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-text">
+                          <div class="stat-value">< 50ms</div>
+                          <div class="stat-desc">Response Time</div>
+                        </div>
+                      </div>
+                      <div class="tech-stat">
+                        <div class="stat-icon">🔒</div>
+                        <div class="stat-text">
+                          <div class="stat-value">100%</div>
+                          <div class="stat-desc">Secure</div>
+                        </div>
+                      </div>
+                      <div class="tech-stat">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-text">
+                          <div class="stat-value">Minimal</div>
+                          <div class="stat-desc">CPU Usage</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-navigation">
+            <button class="carousel-btn prev-btn" id="prev-btn">‹</button>
+            <div class="carousel-indicators" id="carousel-indicators">
+              <span class="indicator active" data-slide="0"></span>
+              <span class="indicator" data-slide="1"></span>
+              <span class="indicator" data-slide="2"></span>
+              <span class="indicator" data-slide="3"></span>
+            </div>
+            <button class="carousel-btn next-btn" id="next-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">See It In Action</h2>
+          <p class="section-subtitle">
+            Experience the power of smart comment tracking
+          </p>
+        </div>
+
+        <div class="demo-content">
+          <div class="demo-video">
+            <div class="demo-mockup-container">
+              <div class="browser-mockup">
+                <div class="browser-header">
+                  <div class="browser-buttons">
+                    <div class="btn-close"></div>
+                    <div class="btn-minimize"></div>
+                    <div class="btn-maximize"></div>
+                  </div>
+                  <div class="browser-url">youtube.com/watch?v=demo</div>
+                </div>
+                <div class="browser-content">
+                  <div class="video-placeholder">
+                    <div class="play-icon">▶</div>
+                    <p>Interactive Demo Video</p>
+                    <small>Click to see the extension in action</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="demo-features">
+            <div class="demo-feature">
+              <div class="demo-feature-icon">🎯</div>
+              <h4>Real-time Tracking</h4>
+              <p>
+                Watch comments appear instantly as you track specific users or
+                timestamp references.
+              </p>
+            </div>
+            <div class="demo-feature">
+              <div class="demo-feature-icon">⏰</div>
+              <h4>Smart Timestamps</h4>
+              <p>
+                Toast notifications appear precisely when the video reaches
+                referenced timestamps.
+              </p>
+            </div>
+            <div class="demo-feature">
+              <div class="demo-feature-icon">🎨</div>
+              <h4>Beautiful Themes</h4>
+              <p>
+                Choose from 6 gorgeous themes that blend seamlessly with your
+                viewing experience.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="installation">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Easy Installation</h2>
+          <p class="section-subtitle">Get started in just a few clicks</p>
+        </div>
+
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Download Extension</h3>
+              <p>
+                Get from Chrome Web Store (coming soon) or download from GitHub
+              </p>
+              <a
+                href="https://chromewebstore.google.com/category/extensions"
+                class="step-link"
+                style="background: #666; cursor: not-allowed"
+                title="Coming Soon"
+                >Chrome Store (Soon)</a
+              ><br /><br />
+              <a
+                href="https://github.com/chinmay-sawant/YoutubeCommentsTracker/archive/refs/heads/main.zip"
+                class="step-link"
+                style="margin-left: 10px"
+                >Download ZIP</a
+              >
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Load in Chrome</h3>
+              <p>Open Chrome Extensions page and load the unpacked extension</p>
+              <a href="chrome://extensions/" class="step-link"
+                >Open Extensions</a
+              >
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Configure Settings</h3>
+              <p>
+                Set your preferences and optionally add your YouTube API key
+              </p>
+              <span class="step-link">Ready to use!</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="install-note">
+          <div class="note-icon">💡</div>
+          <div class="note-content">
+            <strong>Pro Tip:</strong> Add your YouTube API key for faster, more
+            reliable comment fetching and enhanced features.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Support Section -->
+    <section id="support" class="support">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Support & Community</h2>
+          <p class="section-subtitle">
+            We're here to help you get the most out of the extension
+          </p>
+        </div>
+
+        <div class="support-grid">
+          <div class="support-card">
+            <div class="support-icon">📖</div>
+            <h3>Documentation</h3>
+            <p>
+              Comprehensive guides, API setup instructions, and troubleshooting
+              tips.
+            </p>
+            <a
+              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker#readme"
+              class="support-link"
+              >Read Docs</a
+            >
+          </div>
+
+          <div class="support-card">
+            <div class="support-icon">🐛</div>
+            <h3>Bug Reports</h3>
+            <p>
+              Found an issue? Report it on GitHub and we'll get it fixed
+              quickly.
+            </p>
+            <a
+              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues/new?labels=bug&template=bug_report.md"
+              class="support-link"
+              >Report Bug</a
+            >
+          </div>
+
+          <div class="support-card">
+            <div class="support-icon">💡</div>
+            <h3>Feature Requests</h3>
+            <p>
+              Have an idea for a new feature? We'd love to hear your
+              suggestions!
+            </p>
+            <a
+              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues/new?labels=enhancement&template=feature_request.md"
+              class="support-link"
+              >Suggest Feature</a
+            >
+          </div>
+
+          <div class="support-card">
+            <div class="support-icon">💬</div>
+            <h3>Community</h3>
+            <p>
+              Join our community to share tips, tricks, and get help from other
+              users.
+            </p>
+            <a
+              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker"
+              class="support-link"
+              >Join Community</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-info">
+            <div class="footer-brand">
+              <div class="brand-icon">🎯</div>
+              <span class="brand-text">YouTube Comment Tracker</span>
+            </div>
+            <p class="footer-description">
+              Enhancing your YouTube experience with smart comment tracking and
+              real-time notifications.
+            </p>
+          </div>
+
+          <div class="footer-links">
+            <div class="footer-section">
+              <h4>Extension</h4>
+              <a href="#features">Features</a>
+              <a href="#installation">Install</a>
+              <a href="#demo">Demo</a>
+            </div>
+
+            <div class="footer-section">
+              <h4>Support</h4>
+              <a href="#">Documentation</a>
+              <a href="#">Bug Reports</a>
+              <a href="#">GitHub</a>
+            </div>
+
+            <div class="footer-section">
+              <h4>Legal</h4>
+              <a href="#">Privacy Policy</a>
+              <a href="#">MIT License</a>
+              <a href="#">Terms of Use</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p class="made-by" style="margin: 0">
+            Made with
+            <span aria-hidden="true" style="color: #ff0000">❤</span> by Chinmay
+            Sawant
+          </p>
+          <p>
+            &copy; 2025 YouTube Comment Tracker. Open source project under MIT
+            License.
+          </p>
+          <p class="footer-disclaimer">
+            Not affiliated with YouTube or Google. Independent project for
+            enhanced viewing experience.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/theme.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/carousel.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/interactive.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

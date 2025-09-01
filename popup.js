@@ -3,6 +3,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const usernameInput = document.getElementById('username-input');
     const sortSelect = document.getElementById('sort-select');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const toastTimeoutInput = document.getElementById('toast-timeout-input');
+    const toastExtensionSelect = document.getElementById('toast-extension-select');
+    const themeSelect = document.getElementById('theme-select');
     const saveBtn = document.getElementById('save-btn');
     const clearBtn = document.getElementById('clear-btn');
     const statusMessage = document.getElementById('status-message');
@@ -16,25 +20,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Event listeners
     saveBtn.addEventListener('click', saveSettings);
     clearBtn.addEventListener('click', clearSettings);
+    sortSelect.addEventListener('change', updateCurrentTarget);
+    apiKeyInput.addEventListener('input', clearStatus);
+    toastTimeoutInput.addEventListener('input', clearStatus);
+    toastExtensionSelect.addEventListener('change', clearStatus);
     usernameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             saveSettings();
         }
     });
-    usernameInput.addEventListener('input', clearStatus);
+    usernameInput.addEventListener('input', () => {
+        clearStatus();
+        updateCurrentTarget();
+    });
     helpLink.addEventListener('click', showHelp);
     feedbackLink.addEventListener('click', showFeedback);
     
     // Load current settings from storage
     async function loadCurrentSettings() {
         try {
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme', 'toastExtensionTime']);
             const username = result.targetUsername || '';
             const sortOrder = result.sortOrder || 'top';
+            const apiKey = result.apiKey || '';
+            const toastTimeout = result.toastTimeout || 10;
+            const toastTheme = result.toastTheme || 'default';
+            const toastExtensionTime = result.toastExtensionTime || 10;
             
             usernameInput.value = username;
             sortSelect.value = sortOrder;
-            currentUsername.textContent = username || 'Timestamp mode';
+            apiKeyInput.value = apiKey;
+            toastTimeoutInput.value = toastTimeout;
+            themeSelect.value = toastTheme;
+            toastExtensionSelect.value = toastExtensionTime;
+            updateCurrentTarget(); // Use the new function to set proper target text
             
             if (username) {
                 showStatus('Settings loaded successfully', 'success');
@@ -45,12 +64,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
+    // Update current target display based on username and sort order
+    function updateCurrentTarget() {
+        const username = usernameInput.value.trim();
+        const sortOrder = sortSelect.value;
+        
+        let targetText = '';
+        
+        if (sortOrder === 'video-player-time') {
+            targetText = 'Video Player Time (Toasts)';
+        } else if (username) {
+            const sortDescriptions = {
+                'top': 'User + Top Timestamps',
+                'top-no-timestamps': 'User + Top Comments',
+                'newest': 'User + Newest Comments'
+            };
+            targetText = `${username} (${sortDescriptions[sortOrder] || 'Comments'})`;
+        } else {
+            const sortDescriptions = {
+                'top': 'Timestamp Comments Only',
+                'top-no-timestamps': 'Top Comments Only',
+                'newest': 'Newest Comments Only'
+            };
+            targetText = sortDescriptions[sortOrder] || 'Comments Only';
+        }
+        
+        currentUsername.textContent = targetText;
+    }
+    
     // Save settings to storage
     async function saveSettings() {
         const username = usernameInput.value.trim();
         const sortOrder = sortSelect.value;
+        const apiKey = apiKeyInput.value.trim();
+        const toastTimeout = parseInt(toastTimeoutInput.value) || 10;
+        const toastTheme = themeSelect.value;
+        const toastExtensionTime = parseInt(toastExtensionSelect.value) || 10;
         
-        // Allow empty username for timestamp-only mode
+        // Validate username
         if (username && username.length < 2) {
             showStatus('Username must be at least 2 characters (or leave empty for timestamp mode)', 'error');
             usernameInput.focus();
@@ -63,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        // Check for invalid characters (basic check)
+        // Check for invalid characters in username (basic check)
         if (username) {
             const invalidChars = /[<>\"'&]/;
             if (invalidChars.test(username)) {
@@ -73,18 +124,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         
+        // Validate API key
+        if (apiKey && apiKey.length < 10) {
+            showStatus('API key seems too short. Please check your API key.', 'error');
+            apiKeyInput.focus();
+            return;
+        }
+        
+        // Validate toast timeout
+        if (toastTimeout < 3 || toastTimeout > 60) {
+            showStatus('Toast timeout must be between 3 and 60 seconds', 'error');
+            toastTimeoutInput.focus();
+            return;
+        }
+        
         try {
             // Save to storage
             await chrome.storage.sync.set({ 
                 targetUsername: username,
-                sortOrder: sortOrder
+                sortOrder: sortOrder,
+                apiKey: apiKey,
+                toastTimeout: toastTimeout,
+                toastTheme: toastTheme,
+                toastExtensionTime: toastExtensionTime
             });
             
             // Update current username display
-            currentUsername.textContent = username || 'Timestamp mode';
+            updateCurrentTarget();
             
             // Notify content script about settings change
-            notifyContentScript({ username, sortOrder });
+            notifyContentScript({ username, sortOrder, apiKey, toastTimeout, toastTheme, toastExtensionTime });
+            
+            showStatus('Settings saved successfully!', 'success');
             
             showStatus('Settings saved successfully!', 'success');
             
@@ -107,10 +178,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clear settings
     async function clearSettings() {
         try {
-            await chrome.storage.sync.remove(['targetUsername', 'sortOrder']);
+            await chrome.storage.sync.remove(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme', 'toastExtensionTime']);
             usernameInput.value = '';
             sortSelect.value = 'top'; // Reset to default
-            currentUsername.textContent = 'Timestamp mode';
+            apiKeyInput.value = '';
+            toastTimeoutInput.value = '10'; // Reset to default
+            themeSelect.value = 'default'; // Reset to default theme
+            toastExtensionSelect.value = '10'; // Reset to default
+            updateCurrentTarget(); // Update the display
             showStatus('Settings cleared', 'success');
             
             // Update button text temporarily
