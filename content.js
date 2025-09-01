@@ -33,13 +33,25 @@
             targetUsername = result.targetUsername || '';
             currentSortOrder = result.sortOrder || 'top';
             
-            // Always create overlay to show status
+            // Create overlay (but hide it if in video player time mode)
             createCommentOverlay();
             
-            updateOverlayStatus('Loading video details...');
-            
-            // Load comments using YouTube API
-            await loadCommentsFromAPI();
+            // Handle different sort modes
+            if (currentSortOrder === 'video-player-time') {
+                // Hide overlay for video player time mode
+                if (commentContainer) {
+                    commentContainer.style.display = 'none';
+                }
+                updateOverlayStatus('Video time monitoring mode - overlay hidden');
+                await loadCommentsForVideoPlayerTime();
+            } else {
+                // Show overlay for other modes
+                if (commentContainer) {
+                    commentContainer.style.display = 'block';
+                }
+                updateOverlayStatus('Loading video details...');
+                await loadCommentsFromAPI();
+            }
             
         } catch (error) {
             console.error('Failed to initialize comment tracker:', error);
@@ -241,8 +253,11 @@
             clearInterval(videoTimeInterval);
         }
         
+        console.log('Starting video time monitoring with', videoPlayerTimeComments.length, 'comments loaded');
+        
         videoTimeInterval = setInterval(() => {
             if (currentSortOrder !== 'video-player-time') {
+                console.log('Sort order changed, stopping video time monitoring');
                 stopVideoTimeMonitoring();
                 return;
             }
@@ -256,12 +271,15 @@
             }
             
             lastCheckedTime = currentTimeRounded;
+            console.log(`Checking for relevant comments at time: ${formatTimestamp(currentTimeRounded)}`);
             
             // Find comments with timestamps relevant to current time
             const relevantComments = videoPlayerTimeComments.filter(comment => {
                 const timestamps = extractTimestampsFromComment(comment.text);
                 return timestamps.some(timestamp => isTimestampRelevant(timestamp, currentTime));
             });
+            
+            console.log(`Found ${relevantComments.length} relevant comments for current time`);
             
             // Sort by likes and show top 3 most relevant
             relevantComments
@@ -284,6 +302,7 @@
                             if (toast) {
                                 toast.setAttribute('data-comment-id', comment.id);
                             }
+                            console.log(`Created toast for ${relevantTimestamp}: ${comment.username}`);
                         }
                     }
                 });
@@ -439,6 +458,7 @@
                 // Start monitoring video time and showing toasts
                 startVideoTimeMonitoring();
                 
+                console.log('Video time monitoring setup complete');
                 commentsLoaded = true;
             } else {
                 console.error('API error:', response.message);
@@ -1081,7 +1101,11 @@
                 
                 // Re-load comments with new settings
                 setTimeout(() => {
-                    loadCommentsFromAPI();
+                    if (currentSortOrder === 'video-player-time') {
+                        loadCommentsForVideoPlayerTime();
+                    } else {
+                        loadCommentsFromAPI();
+                    }
                 }, 500);
             }
         }
@@ -1138,6 +1162,17 @@
                     // If switching away from video-player-time, stop monitoring
                     if (oldSortOrder === 'video-player-time' && currentSortOrder !== 'video-player-time') {
                         stopVideoTimeMonitoring();
+                        // Show overlay when switching away from video player time
+                        if (commentContainer) {
+                            commentContainer.style.display = 'block';
+                        }
+                    }
+                    
+                    // If switching to video-player-time, hide overlay
+                    if (currentSortOrder === 'video-player-time') {
+                        if (commentContainer) {
+                            commentContainer.style.display = 'none';
+                        }
                     }
                     
                     // Clear and reload with new sort order

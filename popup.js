@@ -16,12 +16,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Event listeners
     saveBtn.addEventListener('click', saveSettings);
     clearBtn.addEventListener('click', clearSettings);
+    sortSelect.addEventListener('change', updateCurrentTarget);
     usernameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             saveSettings();
         }
     });
-    usernameInput.addEventListener('input', clearStatus);
+    usernameInput.addEventListener('input', () => {
+        clearStatus();
+        updateCurrentTarget();
+    });
     helpLink.addEventListener('click', showHelp);
     feedbackLink.addEventListener('click', showFeedback);
     
@@ -34,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             usernameInput.value = username;
             sortSelect.value = sortOrder;
-            currentUsername.textContent = username || 'Timestamp mode';
+            updateCurrentTarget(); // Use the new function to set proper target text
             
             if (username) {
                 showStatus('Settings loaded successfully', 'success');
@@ -43,6 +47,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error loading settings:', error);
             showStatus('Error loading settings', 'error');
         }
+    }
+    
+    // Update current target display based on username and sort order
+    function updateCurrentTarget() {
+        const username = usernameInput.value.trim();
+        const sortOrder = sortSelect.value;
+        
+        let targetText = '';
+        
+        if (sortOrder === 'video-player-time') {
+            targetText = 'Video Player Time (Toasts)';
+        } else if (username) {
+            const sortDescriptions = {
+                'top': 'User + Top Timestamps',
+                'top-no-timestamps': 'User + Top Comments',
+                'newest': 'User + Newest Comments'
+            };
+            targetText = `${username} (${sortDescriptions[sortOrder] || 'Comments'})`;
+        } else {
+            const sortDescriptions = {
+                'top': 'Timestamp Comments Only',
+                'top-no-timestamps': 'Top Comments Only',
+                'newest': 'Newest Comments Only'
+            };
+            targetText = sortDescriptions[sortOrder] || 'Comments Only';
+        }
+        
+        currentUsername.textContent = targetText;
     }
     
     // Save settings to storage
@@ -81,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             
             // Update current username display
-            currentUsername.textContent = username || 'Timestamp mode';
+            updateCurrentTarget();
             
             // Notify content script about settings change
             notifyContentScript({ username, sortOrder });
@@ -110,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await chrome.storage.sync.remove(['targetUsername', 'sortOrder']);
             usernameInput.value = '';
             sortSelect.value = 'top'; // Reset to default
-            currentUsername.textContent = 'Timestamp mode';
+            updateCurrentTarget(); // Update the display
             showStatus('Settings cleared', 'success');
             
             // Update button text temporarily

@@ -1,7 +1,7 @@
 // YouTube Comment Tracker - Background Service Worker
 // This handles secure API calls to YouTube Data API
 
-const YOUTUBE_API_KEY = "AIzaSyClDUphdb7dDEkV6PEXqKEiZcpc9GEpxG8"; // Replace with your actual API key
+const YOUTUBE_API_KEY = "YOUR_API_KEY"; // Replace with your actual API key
 
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
