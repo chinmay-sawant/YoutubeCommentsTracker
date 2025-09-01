@@ -162,6 +162,11 @@
         // Add to active toasts array
         activeToasts.push(toast);
         
+        // Wait a moment for the toast to render before final positioning
+        setTimeout(() => {
+            repositionToasts();
+        }, 50);
+        
         // Set up auto removal with pause awareness
         scheduleToastRemoval(toast, toastTimeout);
         
@@ -223,14 +228,20 @@
     // Position toast in top-right, stacking them vertically
     function positionToast(toast) {
         const topMargin = 20;
-        const toastHeight = 100; // Estimated toast height
-        const spacing = 10;
         
-        // Calculate vertical position based on existing toasts
-        const verticalOffset = activeToasts.length * (toastHeight + spacing);
+        // Calculate actual heights of existing toasts for proper spacing
+        let totalHeight = 0;
+        activeToasts.forEach(existingToast => {
+            if (existingToast && existingToast.parentNode) {
+                const rect = existingToast.getBoundingClientRect();
+                // Use actual height if available, otherwise fallback to minimum height
+                const height = rect.height > 0 ? rect.height : 80; // 80px is our min-height
+                totalHeight += height + 15; // 15px spacing between toasts
+            }
+        });
         
         // The toast-themes.css handles base positioning, we just adjust for stacking
-        toast.style.top = `${topMargin + verticalOffset}px`;
+        toast.style.top = `${topMargin + totalHeight}px`;
         toast.style.zIndex = `${10000 + activeToasts.length}`;
     }
     
@@ -267,14 +278,18 @@
     // Reposition all active toasts
     function repositionToasts() {
         const topMargin = 20;
-        const toastHeight = 100;
-        const spacing = 10;
+        let currentTop = topMargin;
         
         activeToasts.forEach((toast, index) => {
             if (toast && toast.parentNode) {
-                const verticalOffset = index * (toastHeight + spacing);
-                toast.style.top = `${topMargin + verticalOffset}px`;
+                toast.style.top = `${currentTop}px`;
                 toast.style.zIndex = `${10000 + index}`;
+                
+                // Get actual height and add spacing for next toast
+                const rect = toast.getBoundingClientRect();
+                // Use actual height if available, otherwise fallback to minimum height
+                const height = rect.height > 0 ? rect.height : 80; // 80px is our min-height
+                currentTop += height + 15; // 15px spacing between toasts
             }
         });
     }
@@ -360,9 +375,9 @@
             // Store the remaining time for when we resume
             pausedToastTimeouts.set(toast, remainingTime);
             
-            // Add visual indicator that toast is paused
-            toast.style.opacity = '0.7';
-            toast.style.border = '2px solid rgba(255, 255, 0, 0.5)';
+            // Add visual indicator that toast is paused (no opacity change to keep text readable)
+            toast.style.border = '3px solid rgba(255, 215, 0, 0.8)'; // Gold border for pause
+            toast.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.3)'; // Subtle glow
         });
         
         // Clear the active timeouts map since they're all paused
@@ -375,8 +390,8 @@
             // Only resume if toast still exists
             if (toast.parentNode) {
                 // Remove pause visual indicators
-                toast.style.opacity = '';
                 toast.style.border = '';
+                toast.style.boxShadow = '';
                 
                 // Schedule new timeout with remaining time
                 const timeoutId = setTimeout(() => {
