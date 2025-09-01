@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sortSelect = document.getElementById('sort-select');
     const apiKeyInput = document.getElementById('api-key-input');
     const toastTimeoutInput = document.getElementById('toast-timeout-input');
+    const toastExtensionSelect = document.getElementById('toast-extension-select');
     const themeSelect = document.getElementById('theme-select');
     const saveBtn = document.getElementById('save-btn');
     const clearBtn = document.getElementById('clear-btn');
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     sortSelect.addEventListener('change', updateCurrentTarget);
     apiKeyInput.addEventListener('input', clearStatus);
     toastTimeoutInput.addEventListener('input', clearStatus);
+    toastExtensionSelect.addEventListener('change', clearStatus);
     usernameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             saveSettings();
@@ -37,18 +39,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load current settings from storage
     async function loadCurrentSettings() {
         try {
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme', 'toastExtensionTime']);
             const username = result.targetUsername || '';
             const sortOrder = result.sortOrder || 'top';
             const apiKey = result.apiKey || '';
             const toastTimeout = result.toastTimeout || 10;
             const toastTheme = result.toastTheme || 'default';
+            const toastExtensionTime = result.toastExtensionTime || 10;
             
             usernameInput.value = username;
             sortSelect.value = sortOrder;
             apiKeyInput.value = apiKey;
             toastTimeoutInput.value = toastTimeout;
             themeSelect.value = toastTheme;
+            toastExtensionSelect.value = toastExtensionTime;
             updateCurrentTarget(); // Use the new function to set proper target text
             
             if (username) {
@@ -95,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const apiKey = apiKeyInput.value.trim();
         const toastTimeout = parseInt(toastTimeoutInput.value) || 10;
         const toastTheme = themeSelect.value;
+        const toastExtensionTime = parseInt(toastExtensionSelect.value) || 10;
         
         // Validate username
         if (username && username.length < 2) {
@@ -140,14 +145,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sortOrder: sortOrder,
                 apiKey: apiKey,
                 toastTimeout: toastTimeout,
-                toastTheme: toastTheme
+                toastTheme: toastTheme,
+                toastExtensionTime: toastExtensionTime
             });
             
             // Update current username display
             updateCurrentTarget();
             
             // Notify content script about settings change
-            notifyContentScript({ username, sortOrder, apiKey, toastTimeout, toastTheme });
+            notifyContentScript({ username, sortOrder, apiKey, toastTimeout, toastTheme, toastExtensionTime });
             
             showStatus('Settings saved successfully!', 'success');
             
@@ -172,12 +178,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clear settings
     async function clearSettings() {
         try {
-            await chrome.storage.sync.remove(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme']);
+            await chrome.storage.sync.remove(['targetUsername', 'sortOrder', 'apiKey', 'toastTimeout', 'toastTheme', 'toastExtensionTime']);
             usernameInput.value = '';
             sortSelect.value = 'top'; // Reset to default
             apiKeyInput.value = '';
             toastTimeoutInput.value = '10'; // Reset to default
             themeSelect.value = 'default'; // Reset to default theme
+            toastExtensionSelect.value = '10'; // Reset to default
             updateCurrentTarget(); // Update the display
             showStatus('Settings cleared', 'success');
             

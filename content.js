@@ -18,6 +18,11 @@
     let shownTimestamps = new Map(); // Track last shown time for timestamps (timestampKey -> lastShownTime)
     let toastTimeout = 10; // Toast display duration in seconds (default: 10)
     let currentToastTheme = 'default'; // Current toast theme (default: 'default')
+    let toastExtensionTime = 10; // Additional time when toast is clicked (default: 10 seconds)
+    let toastTimeouts = new Map(); // Track timeout IDs for each toast
+    let isPaused = false; // Track video pause state
+    let pauseStartTime = null; // Track when video was paused
+    let pausedToastTimeouts = new Map(); // Store remaining time for paused toasts
     const MAX_RETRIES = 5;
     
     // Initialize the extension
@@ -33,11 +38,12 @@
             console.log('YouTube Comment Tracker initialized for video:', currentVideoId);
             
             // Get the target username from storage
-            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'toastTimeout', 'toastTheme']);
+            const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'toastTimeout', 'toastTheme', 'toastExtensionTime']);
             targetUsername = result.targetUsername || '';
             currentSortOrder = result.sortOrder || 'top';
             toastTimeout = result.toastTimeout || 10;
             currentToastTheme = result.toastTheme || 'default';
+            toastExtensionTime = result.toastExtensionTime || 10;
             
             // Create overlay (but hide it if in video player time mode)
             createCommentOverlay();
@@ -79,9 +85,10 @@
         if (videoElement) {
             const currentTime = Math.floor(videoElement.currentTime);
             const duration = Math.floor(videoElement.duration);
-            return { currentTime, duration };
+            const paused = videoElement.paused;
+            return { currentTime, duration, paused };
         }
-        return { currentTime: 0, duration: 0 };
+        return { currentTime: 0, duration: 0, paused: false };
     }
     
     // Convert seconds to timestamp format (e.g., 65 -> "1:05")
@@ -127,6 +134,25 @@
             <div class="toast-content">${comment.text.substring(0, 200)}${comment.text.length > 200 ? '...' : ''}</div>
         `;
         
+        // Make toast clickable with visual feedback
+        toast.style.cursor = 'pointer';
+        toast.title = `Click to extend display time by ${toastExtensionTime} seconds`;
+        
+        // Add click event to extend toast display time
+        toast.addEventListener('click', () => {
+            extendToastTime(toast);
+        });
+        
+        // Add hover effects
+        toast.addEventListener('mouseenter', () => {
+            toast.style.transform = 'scale(1.02)';
+            toast.style.transition = 'transform 0.2s ease';
+        });
+        
+        toast.addEventListener('mouseleave', () => {
+            toast.style.transform = 'scale(1)';
+        });
+        
         // Position toast
         positionToast(toast);
         
@@ -136,14 +162,62 @@
         // Add to active toasts array
         activeToasts.push(toast);
         
-        // Auto remove after configured timeout
-        setTimeout(() => {
-            removeToast(toast);
-        }, toastTimeout * 1000); // Convert seconds to milliseconds
+        // Set up auto removal with pause awareness
+        scheduleToastRemoval(toast, toastTimeout);
         
         console.log(`Created toast for timestamp ${timestamp}:`, comment.username);
         
         return toast;
+    }
+    
+    // Schedule toast removal with pause-aware timeout
+    function scheduleToastRemoval(toast, timeoutSeconds) {
+        const timeoutId = setTimeout(() => {
+            removeToast(toast);
+        }, timeoutSeconds * 1000);
+        
+        // Store the timeout ID and creation time for pause handling
+        toastTimeouts.set(toast, {
+            timeoutId: timeoutId,
+            remainingTime: timeoutSeconds * 1000,
+            startTime: Date.now()
+        });
+    }
+    
+    // Extend toast display time when clicked
+    function extendToastTime(toast) {
+        const toastData = toastTimeouts.get(toast);
+        if (!toastData) return;
+        
+        // Clear existing timeout
+        clearTimeout(toastData.timeoutId);
+        
+        // Calculate current remaining time
+        const elapsed = Date.now() - toastData.startTime;
+        const currentRemaining = Math.max(0, toastData.remainingTime - elapsed);
+        
+        // Add extension time
+        const newRemainingTime = currentRemaining + (toastExtensionTime * 1000);
+        
+        // Schedule new removal
+        const newTimeoutId = setTimeout(() => {
+            removeToast(toast);
+        }, newRemainingTime);
+        
+        // Update stored data
+        toastTimeouts.set(toast, {
+            timeoutId: newTimeoutId,
+            remainingTime: newRemainingTime,
+            startTime: Date.now()
+        });
+        
+        // Visual feedback for click
+        toast.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.5)';
+        setTimeout(() => {
+            toast.style.boxShadow = '';
+        }, 300);
+        
+        console.log(`Extended toast display time by ${toastExtensionTime} seconds`);
     }
     
     // Position toast in top-right, stacking them vertically
@@ -163,6 +237,13 @@
     // Remove toast and reposition remaining toasts
     function removeToast(toast) {
         if (!toast || !toast.parentNode) return;
+        
+        // Clean up timeout tracking
+        const toastData = toastTimeouts.get(toast);
+        if (toastData) {
+            clearTimeout(toastData.timeoutId);
+            toastTimeouts.delete(toast);
+        }
         
         // Remove from active toasts array
         const index = activeToasts.indexOf(toast);
@@ -247,6 +328,74 @@
         return timestamps;
     }
     
+    // Handle video pause/play state for toast freezing
+    function handleVideoPauseState(paused) {
+        if (paused && !isPaused) {
+            // Video just paused - freeze all toasts
+            pauseAllToasts();
+            isPaused = true;
+            pauseStartTime = Date.now();
+            console.log('Video paused - freezing all toasts');
+        } else if (!paused && isPaused) {
+            // Video just resumed - unfreeze all toasts
+            resumeAllToasts();
+            isPaused = false;
+            pauseStartTime = null;
+            console.log('Video resumed - unfreezing all toasts');
+        }
+    }
+    
+    // Pause all active toasts (freeze their timeouts)
+    function pauseAllToasts() {
+        const currentTime = Date.now();
+        
+        toastTimeouts.forEach((toastData, toast) => {
+            // Clear the current timeout
+            clearTimeout(toastData.timeoutId);
+            
+            // Calculate remaining time
+            const elapsed = currentTime - toastData.startTime;
+            const remainingTime = Math.max(0, toastData.remainingTime - elapsed);
+            
+            // Store the remaining time for when we resume
+            pausedToastTimeouts.set(toast, remainingTime);
+            
+            // Add visual indicator that toast is paused
+            toast.style.opacity = '0.7';
+            toast.style.border = '2px solid rgba(255, 255, 0, 0.5)';
+        });
+        
+        // Clear the active timeouts map since they're all paused
+        toastTimeouts.clear();
+    }
+    
+    // Resume all paused toasts
+    function resumeAllToasts() {
+        pausedToastTimeouts.forEach((remainingTime, toast) => {
+            // Only resume if toast still exists
+            if (toast.parentNode) {
+                // Remove pause visual indicators
+                toast.style.opacity = '';
+                toast.style.border = '';
+                
+                // Schedule new timeout with remaining time
+                const timeoutId = setTimeout(() => {
+                    removeToast(toast);
+                }, remainingTime);
+                
+                // Update timeout tracking
+                toastTimeouts.set(toast, {
+                    timeoutId: timeoutId,
+                    remainingTime: remainingTime,
+                    startTime: Date.now()
+                });
+            }
+        });
+        
+        // Clear the paused timeouts map
+        pausedToastTimeouts.clear();
+    }
+    
     // Monitor video time and show relevant toasts
     function startVideoTimeMonitoring() {
         if (videoTimeInterval) {
@@ -268,8 +417,16 @@
                 return;
             }
             
-            const { currentTime } = getVideoPlayerTime();
+            const { currentTime, paused } = getVideoPlayerTime();
             const currentTimeRounded = Math.floor(currentTime);
+            
+            // Handle pause state changes
+            handleVideoPauseState(paused);
+            
+            // Skip processing if video is paused
+            if (paused) {
+                return;
+            }
             
             // Check every second, but only log and process if time actually changed
             if (currentTimeRounded === lastCheckedTime) {
@@ -1209,9 +1366,9 @@
     // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'settingsUpdated') {
-            const { username, sortOrder, apiKey, toastTimeout: newToastTimeout, toastTheme } = request.settings;
+            const { username, sortOrder, apiKey, toastTimeout: newToastTimeout, toastTheme, toastExtensionTime: newToastExtensionTime } = request.settings;
             
-            console.log('Settings updated from popup:', { username, sortOrder, apiKey, toastTimeout: newToastTimeout, toastTheme });
+            console.log('Settings updated from popup:', { username, sortOrder, apiKey, toastTimeout: newToastTimeout, toastTheme, toastExtensionTime: newToastExtensionTime });
             
             // Update current settings
             const oldSortOrder = currentSortOrder;
@@ -1219,6 +1376,7 @@
             currentSortOrder = sortOrder || 'top';
             toastTimeout = newToastTimeout || 10;
             currentToastTheme = toastTheme || 'default';
+            toastExtensionTime = newToastExtensionTime || 10;
             
             // Update overlay title
             if (commentContainer) {

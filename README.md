@@ -71,6 +71,7 @@ The extension works in multiple modes based on your settings:
    - **Username**: Enter the YouTube username you want to track (optional)
    - **Sort Method**: Choose how comments are sorted and displayed
    - **Toast Duration**: Set how long toast notifications appear (for Video Player Time mode)
+   - **Toast Click Extension**: Set additional time added when clicking on toasts (5-30 seconds)
 3. Click "Save Settings"
 
 ### Display Modes
@@ -94,6 +95,9 @@ The extension offers three powerful display modes:
 4. Toasts show relevant timestamp comments at the exact moment they reference
 5. **Rewind Support**: Rewinding the video allows timestamps to re-appear
 6. **Smart Cooldown**: Prevents spam by enforcing 30-second cooldowns between re-shows
+7. **🎵 Pause Freeze**: Toasts freeze when video is paused (visual indicators show paused state)
+8. **👆 Click to Extend**: Click any toast to extend its display time by your configured amount
+9. **⚙️ Configurable**: Set both base toast duration and click extension time in settings
 
 #### 🎨 Toast Theme System
 Choose from 6 beautiful toast themes:
