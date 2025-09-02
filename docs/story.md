@@ -1,6 +1,14 @@
 # Why I Created This Extension
 
-## 🎯 The Problem I Faced
+## � See It In Action
+
+Before diving into the story, check out the extension demo video:
+
+[![YouTube Comment Tracker Demo](https://img.youtube.com/vi/KZeOa2lmccU/sddefault.jpg)](https://youtu.be/KZeOa2lmccU)
+
+**[🎬 Watch Demo Video](https://youtu.be/KZeOa2lmccU)** - See the extension tracking comments in real-time!
+
+## �🎯 The Problem I Faced
 
 I absolutely love watching **"Daily Dose Of Internet"** on YouTube. It's filled with hilarious moments, viral videos, and entertaining content that always keeps me engaged. The comments section is usually buzzing with reactions, additional context, and funny observations from other viewers.
 
