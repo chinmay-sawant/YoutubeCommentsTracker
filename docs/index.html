@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YouTube User Comment Tracker - Chrome Extension</title>
+    <title>YouTube User Comment Viewer - Chrome Extension</title>
     <meta
       name="description"
       content="A powerful Chrome extension for trackin                    <li>
@@ -32,6 +32,9 @@
       rel="stylesheet"
     />
 
+    <!-- YouTube IFrame Player API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <!-- Favicon -->
     <link rel="icon" href="assets/logo.png" type="image/png" />
   </head>
@@ -41,16 +44,16 @@
       <div class="nav-container">
         <div class="nav-brand">
           <div class="brand-icon">
-            <img src="assets/logo.png" alt="YouTube Comment Tracker Logo" />
+            <img src="assets/logo.png" alt="YouTube Comment Viewer Logo" />
           </div>
-          <span class="brand-text">YouTube Comment Tracker</span>
+          <span class="brand-text">YouTube Comment Viewer</span>
         </div>
         <div class="nav-menu" id="nav-menu">
           <a href="#hero" class="nav-link">Home</a>
           <a href="#story" class="nav-link">Story</a>
           <a href="#features" class="nav-link">Features</a>
           <a href="#demo" class="nav-link">Demo</a>
-          <a href="#installation" class="nav-link">Install</a>
+          <a href="#detailed-installation" class="nav-link">Install</a>
           <a href="#support" class="nav-link">Support</a>
           <div class="theme-toggle" id="theme-toggle" title="Toggle Dark Mode">
             <span class="theme-icon">🌙</span>
@@ -79,7 +82,7 @@
           </p>
 
           <div class="hero-buttons">
-            <a href="#installation" class="btn btn-primary">
+            <a href="#detailed-installation" class="btn btn-primary">
               <span>📥</span>
               Install Extension
             </a>
@@ -169,16 +172,17 @@
               <h3>The Problem</h3>
               <p>
                 I love watching <strong>"Daily Dose Of Internet"</strong> on
-                YouTube where there are lots of funny moments, and I used to enjoy
-                looking at the comments. But the main issue for me was finding
-                relevant comments with respect to the timestamp where I was
-                actually watching in the video.
+                YouTube where there are lots of funny moments, and I used to
+                enjoy looking at the comments. But the main issue for me was
+                finding relevant comments with respect to the timestamp where I
+                was actually watching in the video.
               </p>
               <div class="problem-visual">
                 <div class="problem-icon">😩</div>
                 <div class="problem-text">
                   <strong>Before:</strong> Scroll through hundreds of comments,
-                  manually search for timestamps, miss the moment you're watching
+                  manually search for timestamps, miss the moment you're
+                  watching
                 </div>
               </div>
             </div>
@@ -187,8 +191,8 @@
               <h3>The Solution</h3>
               <p class="solution-highlight">
                 <strong>This extension solves that problem</strong> and provides
-                extensive customization options to enhance your YouTube commenting
-                experience!
+                extensive customization options to enhance your YouTube
+                commenting experience!
               </p>
               <div class="solution-visual">
                 <div class="solution-icon">✨</div>
@@ -495,23 +499,31 @@
 
         <div class="demo-content">
           <div class="demo-video">
-            <div class="demo-mockup-container">
-              <div class="browser-mockup">
-                <div class="browser-header">
-                  <div class="browser-buttons">
-                    <div class="btn-close"></div>
-                    <div class="btn-minimize"></div>
-                    <div class="btn-maximize"></div>
-                  </div>
-                  <div class="browser-url">youtube.com/watch?v=demo</div>
-                </div>
-                <div class="browser-content">
-                  <div class="video-placeholder">
-                    <div class="play-icon">▶</div>
-                    <p>Interactive Demo Video</p>
-                    <small>Click to see the extension in action</small>
-                  </div>
-                </div>
+            <div class="youtube-player-container" id="youtube-player-container">
+              <div class="video-header">
+                <h3>🎥 Live Extension Demo</h3>
+                <p>Experience the power of smart comment tracking in action!</p>
+              </div>
+              <div class="youtube-embed" id="youtube-embed">
+                <iframe
+                  id="demo-youtube-player"
+                  width="100%"
+                  height="400"
+                  src="https://www.youtube.com/embed/KZeOa2lmccU?enablejsapi=1&rel=0&modestbranding=1&showinfo=0"
+                  title="YouTube Comment Tracker Extension Demo"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                >
+                </iframe>
+              </div>
+              <div class="video-description">
+                <p>
+                  🎬 <strong>Watch the live demo</strong> to see how the
+                  extension automatically detects timestamp comments and
+                  displays them as beautiful toast notifications that appear
+                  exactly when referenced in the video!
+                </p>
               </div>
             </div>
           </div>
@@ -546,66 +558,346 @@
       </div>
     </section>
 
-    <!-- Installation Section -->
-    <section id="installation" class="installation">
+    <!-- Detailed Installation Section -->
+    <section id="detailed-installation" class="detailed-installation">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">Easy Installation</h2>
-          <p class="section-subtitle">Get started in just a few clicks</p>
+          <h2 class="section-title">Installation & Setup</h2>
+          <p class="section-subtitle">
+            Complete guide to install and configure the extension
+          </p>
         </div>
 
-        <div class="install-steps">
-          <div class="install-step">
-            <div class="step-number">1</div>
+        <div class="setup-guide">
+          <!-- Step 1: Download from GitHub -->
+          <div class="setup-step">
+            <div class="step-header">
+              <div class="step-number-large">1</div>
+              <h3>Download from GitHub</h3>
+            </div>
             <div class="step-content">
-              <h3>Download Extension</h3>
-              <p>
-                Get from Chrome Web Store (coming soon) or download from GitHub
-              </p>
-              <a
-                href="https://chromewebstore.google.com/category/extensions"
-                class="step-link"
-                style="background: #666; cursor: not-allowed"
-                title="Coming Soon"
-                >Chrome Store (Soon)</a
-              ><br /><br />
-              <a
-                href="https://github.com/chinmay-sawant/YoutubeCommentsTracker/archive/refs/heads/main.zip"
-                class="step-link"
-                style="margin-left: 10px"
-                >Download ZIP</a
-              >
+              <div class="step-instructions">
+                <div class="instruction-item">
+                  <div class="instruction-icon">📥</div>
+                  <div class="instruction-text">
+                    <strong>Visit the GitHub Repository:</strong>
+                    <a
+                      href="https://github.com/chinmay-sawant/YoutubeCommentsViewer"
+                      target="_blank"
+                      class="link-highlight"
+                    >
+                      github.com/chinmay-sawant/YoutubeCommentsViewer
+                    </a>
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">⬇️</div>
+                  <div class="instruction-text">
+                    <strong>Download the ZIP:</strong> Click the green "Code"
+                    button → "Download ZIP"
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">📂</div>
+                  <div class="instruction-text">
+                    <strong>Extract the ZIP:</strong> Extract the downloaded
+                    file to a folder on your computer
+                  </div>
+                </div>
+              </div>
+              <div class="code-example">
+                <div class="code-header">Alternative: Clone with Git</div>
+                <pre><code>git clone https://github.com/chinmay-sawant/YoutubeCommentsViewer.git
+cd YoutubeCommentsViewer</code></pre>
+              </div>
             </div>
           </div>
 
-          <div class="install-step">
-            <div class="step-number">2</div>
+          <!-- Step 2: Google Console Setup -->
+          <div class="setup-step">
+            <div class="step-header">
+              <div class="step-number-large">2</div>
+              <h3>Google Cloud Console Setup</h3>
+            </div>
             <div class="step-content">
-              <h3>Load in Chrome</h3>
-              <p>Open Chrome Extensions page and load the unpacked extension</p>
-              <a href="chrome://extensions/" class="step-link"
-                >Open Extensions</a
-              >
+              <div class="step-instructions">
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔐</div>
+                  <div class="instruction-text">
+                    <strong>Create Google Account:</strong> If you don't have
+                    one, create a Google account
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">☁️</div>
+                  <div class="instruction-text">
+                    <strong>Access Google Cloud Console:</strong>
+                    <a
+                      href="https://console.cloud.google.com/"
+                      target="_blank"
+                      class="link-highlight"
+                    >
+                      console.cloud.google.com
+                    </a>
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">➕</div>
+                  <div class="instruction-text">
+                    <strong>Create New Project:</strong> Click "Create Project"
+                    and give it a name (e.g., "YouTube Comment Viewer")
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">🎯</div>
+                  <div class="instruction-text">
+                    <strong>Select Your Project:</strong> Make sure your new
+                    project is selected in the top navigation
+                  </div>
+                </div>
+              </div>
+              <div class="note-box">
+                <div class="note-icon">💡</div>
+                <div class="note-text">
+                  <strong>Note:</strong> Google Cloud Console may require
+                  billing setup, but YouTube Data API v3 has a generous free
+                  tier (10,000 units/day).
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="install-step">
-            <div class="step-number">3</div>
+          <!-- Step 3: Enable YouTube API -->
+          <div class="setup-step">
+            <div class="step-header">
+              <div class="step-number-large">3</div>
+              <h3>Enable YouTube Data API v3</h3>
+            </div>
             <div class="step-content">
-              <h3>Configure Settings</h3>
-              <p>
-                Set your preferences and optionally add your YouTube API key
-              </p>
-              <span class="step-link">Ready to use!</span>
+              <div class="step-instructions">
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔍</div>
+                  <div class="instruction-text">
+                    <strong>Find APIs & Services:</strong> In the left sidebar,
+                    click "APIs & Services" → "Library"
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔎</div>
+                  <div class="instruction-text">
+                    <strong>Search for YouTube:</strong> Search for "YouTube
+                    Data API v3"
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">▶️</div>
+                  <div class="instruction-text">
+                    <strong>Enable the API:</strong> Click on "YouTube Data API
+                    v3" and then click "Enable"
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">⚙️</div>
+                  <div class="instruction-text">
+                    <strong>Go to Credentials:</strong> Click "Create
+                    Credentials" → "API key"
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔑</div>
+                  <div class="instruction-text">
+                    <strong>Copy API Key:</strong> Your API key will be
+                    displayed - copy it to a safe place
+                  </div>
+                </div>
+              </div>
+              <div class="warning-box">
+                <div class="warning-icon">⚠️</div>
+                <div class="warning-text">
+                  <strong>Security Warning:</strong> Keep your API key secure
+                  and never share it publicly. Restrict it to YouTube Data API
+                  v3 only.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Load Extension -->
+          <div class="setup-step">
+            <div class="step-header">
+              <div class="step-number-large">4</div>
+              <h3>Load Extension in Chrome</h3>
+            </div>
+            <div class="step-content">
+              <div class="step-instructions">
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔧</div>
+                  <div class="instruction-text">
+                    <strong>Open Chrome Extensions:</strong> Type
+                    <code>chrome://extensions/</code> in your address bar
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔄</div>
+                  <div class="instruction-text">
+                    <strong>Enable Developer Mode:</strong> Toggle "Developer
+                    mode" on (top right corner)
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">📁</div>
+                  <div class="instruction-text">
+                    <strong>Load Unpacked:</strong> Click "Load unpacked" and
+                    select the extracted extension folder
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">✅</div>
+                  <div class="instruction-text">
+                    <strong>Verify Installation:</strong> The extension should
+                    appear in your extensions list
+                  </div>
+                </div>
+              </div>
+              <div class="code-example">
+                <div class="code-header">Expected Folder Structure</div>
+                <pre><code>YoutubeCommentsViewer/
+├── manifest.json
+├── popup.html
+├── popup.js
+├── content.js
+├── background.js
+├── styles.css
+└── assets/</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: Configure Extension -->
+          <div class="setup-step">
+            <div class="step-header">
+              <div class="step-number-large">5</div>
+              <h3>Configure Extension Settings</h3>
+            </div>
+            <div class="step-content">
+              <div class="step-instructions">
+                <div class="instruction-item">
+                  <div class="instruction-icon">⚙️</div>
+                  <div class="instruction-text">
+                    <strong>Open Extension Popup:</strong> Click the extension
+                    icon in Chrome toolbar
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">🔑</div>
+                  <div class="instruction-text">
+                    <strong>Add API Key:</strong> Paste your YouTube API key in
+                    the settings
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">🎨</div>
+                  <div class="instruction-text">
+                    <strong>Choose Theme:</strong> Select your preferred toast
+                    notification theme
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">📍</div>
+                  <div class="instruction-text">
+                    <strong>Set Position:</strong> Choose overlay position
+                    (top-right recommended)
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <div class="instruction-icon">💾</div>
+                  <div class="instruction-text">
+                    <strong>Save Settings:</strong> Click "Save" to apply your
+                    preferences
+                  </div>
+                </div>
+              </div>
+              <div class="tip-box">
+                <div class="tip-icon">🚀</div>
+                <div class="tip-text">
+                  <strong>Pro Tip:</strong> Test the extension on any YouTube
+                  video to see the comment overlay in action!
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="install-note">
-          <div class="note-icon">💡</div>
-          <div class="note-content">
-            <strong>Pro Tip:</strong> Add your YouTube API key for faster, more
-            reliable comment fetching and enhanced features.
+        <!-- Troubleshooting Section -->
+        <div class="troubleshooting">
+          <h3>🔧 Troubleshooting</h3>
+          <div class="troubleshoot-grid">
+            <div class="troubleshoot-item">
+              <h4>Extension Not Loading?</h4>
+              <ul>
+                <li>
+                  Ensure you're selecting the correct folder (containing
+                  manifest.json)
+                </li>
+                <li>Check that Developer Mode is enabled</li>
+                <li>Try refreshing the extensions page</li>
+              </ul>
+            </div>
+            <div class="troubleshoot-item">
+              <h4>API Key Issues?</h4>
+              <ul>
+                <li>Verify the API key is correctly copied</li>
+                <li>Check that YouTube Data API v3 is enabled</li>
+                <li>
+                  Ensure your Google Cloud project has billing enabled if needed
+                </li>
+              </ul>
+            </div>
+            <div class="troubleshoot-item">
+              <h4>Comments Not Showing?</h4>
+              <ul>
+                <li>Try refreshing the YouTube page</li>
+                <li>Check if the video has comments enabled</li>
+                <li>Verify your internet connection</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Start Checklist -->
+        <div class="quick-start">
+          <h3>✅ Quick Start Checklist</h3>
+          <div class="checklist">
+            <label class="checklist-item">
+              <input type="checkbox" id="check1" />
+              <span class="checkmark"></span>
+              Downloaded extension from GitHub
+            </label>
+            <label class="checklist-item">
+              <input type="checkbox" id="check2" />
+              <span class="checkmark"></span>
+              Created Google Cloud project
+            </label>
+            <label class="checklist-item">
+              <input type="checkbox" id="check3" />
+              <span class="checkmark"></span>
+              Enabled YouTube Data API v3
+            </label>
+            <label class="checklist-item">
+              <input type="checkbox" id="check4" />
+              <span class="checkmark"></span>
+              Generated and copied API key
+            </label>
+            <label class="checklist-item">
+              <input type="checkbox" id="check5" />
+              <span class="checkmark"></span>
+              Loaded extension in Chrome
+            </label>
+            <label class="checklist-item">
+              <input type="checkbox" id="check6" />
+              <span class="checkmark"></span>
+              Configured extension settings
+            </label>
           </div>
         </div>
       </div>
@@ -630,7 +922,7 @@
               tips.
             </p>
             <a
-              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker#readme"
+              href="https://github.com/chinmay-sawant/YoutubeCommentsViewer#readme"
               class="support-link"
               >Read Docs</a
             >
@@ -644,7 +936,7 @@
               quickly.
             </p>
             <a
-              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues/new?labels=bug&template=bug_report.md"
+              href="https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues/new?labels=bug&template=bug_report.md"
               class="support-link"
               >Report Bug</a
             >
@@ -658,7 +950,7 @@
               suggestions!
             </p>
             <a
-              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues/new?labels=enhancement&template=feature_request.md"
+              href="https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues/new?labels=enhancement&template=feature_request.md"
               class="support-link"
               >Suggest Feature</a
             >
@@ -672,7 +964,7 @@
               users.
             </p>
             <a
-              href="https://github.com/chinmay-sawant/YoutubeCommentsTracker"
+              href="https://github.com/chinmay-sawant/YoutubeCommentsViewer"
               class="support-link"
               >Join Community</a
             >
@@ -688,7 +980,7 @@
           <div class="footer-info">
             <div class="footer-brand">
               <div class="brand-icon">🎯</div>
-              <span class="brand-text">YouTube Comment Tracker</span>
+              <span class="brand-text">YouTube Comment Viewer</span>
             </div>
             <p class="footer-description">
               Enhancing your YouTube experience with smart comment tracking and
@@ -700,7 +992,7 @@
             <div class="footer-section">
               <h4>Extension</h4>
               <a href="#features">Features</a>
-              <a href="#installation">Install</a>
+              <a href="#detailed-installation">Install</a>
               <a href="#demo">Demo</a>
             </div>
 
@@ -727,7 +1019,7 @@
             Sawant
           </p>
           <p>
-            &copy; 2025 YouTube Comment Tracker. Open source project under MIT
+            &copy; 2025 YouTube Comment Viewer. Open source project under MIT
             License.
           </p>
           <p class="footer-disclaimer">

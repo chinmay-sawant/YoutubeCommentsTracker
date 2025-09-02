@@ -1,10 +1,12 @@
 // Interactive elements and demo functionality
 class InteractiveElements {
     constructor() {
+        this.youtubePlayerObserver = null;
         this.init();
     }
 
     init() {
+        this.initYouTubePlayer();
         this.initDemoVideo();
         this.initBrowserMockup();
         this.initThemePreview();
@@ -13,7 +15,95 @@ class InteractiveElements {
         this.initTimestampClicks();
         this.initInstallSteps();
         this.initSupportLinks();
+        this.initChecklist();
         this.preloadAssets();
+    }
+
+    // YouTube Player Auto-scroll and Auto-play functionality
+    initYouTubePlayer() {
+        const playerContainer = document.getElementById('youtube-player-container');
+        const iframe = document.getElementById('demo-youtube-player');
+
+        if (!playerContainer || !iframe) return;
+
+        // Set up Intersection Observer for auto-scroll trigger
+        this.youtubePlayerObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Add animation class
+                    playerContainer.classList.add('in-view');
+
+                    // Try to auto-play video when it comes into view (with a slight delay)
+                    setTimeout(() => {
+                        this.attemptAutoPlay(iframe);
+                    }, 1000); // Increased delay to ensure user interaction context
+
+                    // Stop observing after first trigger
+                    this.youtubePlayerObserver.unobserve(playerContainer);
+                }
+            });
+        }, {
+            threshold: 0.5, // Trigger when 50% of the player is visible
+            rootMargin: '0px 0px -50px 0px' // Trigger closer to full visibility
+        });
+
+        this.youtubePlayerObserver.observe(playerContainer);
+    }
+
+    attemptAutoPlay(iframe) {
+        // Try multiple approaches for auto-play
+        try {
+            // Method 1: Use YouTube Player API if available
+            if (window.YT && window.YT.Player) {
+                this.initializeYouTubeAPI(iframe);
+            } else {
+                // Method 2: Load YouTube API and try again
+                this.loadYouTubeAPI(() => {
+                    setTimeout(() => this.initializeYouTubeAPI(iframe), 500);
+                });
+            }
+        } catch (error) {
+            console.log('Auto-play failed:', error);
+        }
+    }
+
+    loadYouTubeAPI(callback) {
+        if (window.YT && window.YT.Player) {
+            callback();
+            return;
+        }
+
+        // Load YouTube IFrame Player API
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Set up callback
+        window.onYouTubeIframeAPIReady = callback;
+    }
+
+    initializeYouTubeAPI(iframe) {
+        try {
+            const playerId = iframe.id;
+            const player = new YT.Player(playerId, {
+                events: {
+                    'onReady': (event) => {
+                        // Try to play the video
+                        console.log('YouTube player ready, attempting to play...');
+                        event.target.playVideo();
+                    },
+                    'onError': (error) => {
+                        console.log('YouTube player error:', error);
+                    },
+                    'onStateChange': (event) => {
+                        console.log('YouTube player state changed:', event.data);
+                    }
+                }
+            });
+        } catch (error) {
+            console.log('YouTube API initialization failed:', error);
+        }
     }
 
     initDemoVideo() {
@@ -248,19 +338,19 @@ class InteractiveElements {
             const text = link.textContent.toLowerCase();
             
             if (text.includes('doc') || text.includes('read docs')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/blob/main/README.md';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/blob/master/README.md';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             } else if (text.includes('bug') || text.includes('report bug')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             } else if (text.includes('feature') || text.includes('suggest feature')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues/new?template=feature_request.md';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues/new?template=feature_request.md';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             } else if (text.includes('community') || text.includes('join community')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             }
@@ -272,13 +362,13 @@ class InteractiveElements {
             const text = link.textContent.toLowerCase();
             
             if (text.includes('documentation')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/blob/main/README.md';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/blob/master/README.md';
                 link.target = '_blank';
             } else if (text.includes('bug reports')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues';
                 link.target = '_blank';
             } else if (text.includes('github')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer';
                 link.target = '_blank';
             }
         });
@@ -288,6 +378,108 @@ class InteractiveElements {
         element.style.transform = 'scale(0.98)';
         setTimeout(() => {
             element.style.transform = 'scale(1)';
+        }, 100);
+    }
+
+    initChecklist() {
+        const checklistItems = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+
+        checklistItems.forEach((checkbox, index) => {
+            // Load saved state from localStorage
+            const savedState = localStorage.getItem(`checklist-item-${index}`);
+            if (savedState === 'true') {
+                checkbox.checked = true;
+            }
+
+            // Add change event listener
+            checkbox.addEventListener('change', () => {
+                // Save state to localStorage
+                localStorage.setItem(`checklist-item-${index}`, checkbox.checked);
+
+                // Add visual feedback
+                const checklistItem = checkbox.closest('.checklist-item');
+                if (checkbox.checked) {
+                    checklistItem.classList.add('completed');
+                    this.showCompletionToast(index);
+                } else {
+                    checklistItem.classList.remove('completed');
+                }
+
+                // Check if all items are completed
+                this.checkAllCompleted();
+            });
+        });
+    }
+
+    showCompletionToast(stepIndex) {
+        const stepNames = [
+            'Downloaded extension from GitHub',
+            'Created Google Cloud project',
+            'Enabled YouTube Data API v3',
+            'Generated and copied API key',
+            'Loaded extension in Chrome',
+            'Configured extension settings'
+        ];
+
+        // Create toast notification
+        const toast = document.createElement('div');
+        toast.className = 'completion-toast';
+        toast.innerHTML = `
+            <div class="toast-icon">✅</div>
+            <div class="toast-content">
+                <div class="toast-title">Step Completed!</div>
+                <div class="toast-message">${stepNames[stepIndex]}</div>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+
+        // Remove after delay
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    checkAllCompleted() {
+        const checklistItems = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+        const allCompleted = Array.from(checklistItems).every(checkbox => checkbox.checked);
+
+        if (allCompleted) {
+            setTimeout(() => {
+                this.showAllCompletedCelebration();
+            }, 500);
+        }
+    }
+
+    showAllCompletedCelebration() {
+        const celebration = document.createElement('div');
+        celebration.className = 'celebration-overlay';
+        celebration.innerHTML = `
+            <div class="celebration-content">
+                <div class="celebration-icon">🎉</div>
+                <h2>Setup Complete!</h2>
+                <p>Your YouTube Comment Viewer extension is ready to use!</p>
+                <button class="celebration-button" onclick="this.closest('.celebration-overlay').remove()">
+                    Get Started
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(celebration);
+
+        // Animate in
+        setTimeout(() => {
+            celebration.classList.add('show');
         }, 100);
     }
 

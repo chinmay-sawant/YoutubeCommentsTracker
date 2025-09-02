@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "YouTube User Comment Tracker",
+  "name": "YouTube User Comment Viewer",
   "version": "1.0.0",
   "description": "Track and display comments from a specific user on YouTube videos in a live overlay feed",
 
@@ -26,7 +26,7 @@
 
   "action": {
     "default_popup": "popup.html",
-    "default_title": "YouTube Comment Tracker Settings"
+    "default_title": "YouTube Comment Viewer Settings"
   },
 
   "icons": {

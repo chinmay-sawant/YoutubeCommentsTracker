@@ -1,8 +1,18 @@
-# YouTube User Comment Tracker
+# YouTube User Comment Viewer
 
 A powerful Google Chrome extension that displays live-updating comments from specific users AND/OR comments containing timestamps on YouTube videos in a transparent, draggable overlay with real-time toast notifications.
 
-## 🎯 Why I Created This Extension
+## Demo Video
+
+**See the extension in action!** Watch how it tracks comments and displays real-time notifications:
+
+[![YouTube Comment Tracker Extension Demo](https://img.youtube.com/vi/KZeOa2lmccU/sddefault.jpg)](https://youtu.be/KZeOa2lmccU)
+
+**[▶️ Watch Demo Video](https://youtu.be/KZeOa2lmccU)** - Click to see the extension tracking comments in real-time!
+
+> 📺 The demo shows the extension detecting timestamp comments like "0:19" and "1:23" and displaying them as beautiful toast notifications that appear exactly when referenced in the video.
+
+## �🎯 Why I Created This Extension
 
 I love watching "Daily Dose Of Internet" on YouTube where there are lots of funny moments, and I used to enjoy looking at the comments. But the main issue for me was finding relevant comments with respect to the timestamp where I was actually watching in the video.
 
@@ -300,7 +310,7 @@ The extension follows a modern Manifest V3 architecture with three main componen
 1. **Clone the repository:**
    ```bash
    git clone <repository-url>
-   cd youtube-comment-tracker
+   cd youtube-comment-Viewer
    ```
 
 2. **Load the extension in Chrome:**

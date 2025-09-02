@@ -1,4 +1,4 @@
-// YouTube Comment Tracker - Popup Script
+// YouTube Comment Viewer - Popup Script
 
 document.addEventListener('DOMContentLoaded', async () => {
     const usernameInput = document.getElementById('username-input');
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showHelp(e) {
         e.preventDefault();
         const helpText = `
-YouTube Comment Tracker Help:
+YouTube Comment Viewer Help:
 
 NEW FEATURES:
 - Automatic timestamp detection! Comments with times like "0:19" or "1:23" are now automatically tracked

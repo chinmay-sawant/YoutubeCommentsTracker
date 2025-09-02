@@ -1,6 +1,6 @@
-/* YouTube Comment Tracker Overlay Styles */
+/* YouTube Comment Viewer Overlay Styles */
 
-#yt-comment-tracker-overlay {
+#yt-comment-Viewer-overlay {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -20,19 +20,19 @@
   will-change: transform;
 }
 
-#yt-comment-tracker-overlay:hover {
+#yt-comment-Viewer-overlay:hover {
   background: rgba(0, 0, 0, 0.85);
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Enhanced dragging state */
-#yt-comment-tracker-overlay.dragging {
+#yt-comment-Viewer-overlay.dragging {
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.yt-tracker-header {
+.yt-Viewer-header {
   background: rgba(40, 40, 40, 0.9);
   padding: 12px 15px;
   display: flex;
@@ -43,14 +43,14 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.yt-tracker-title {
+.yt-Viewer-title {
   font-weight: 600;
   font-size: 13px;
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.yt-tracker-close {
+.yt-Viewer-close {
   background: none;
   border: none;
   color: #ffffff;
@@ -67,11 +67,11 @@
   transition: background-color 0.2s ease;
 }
 
-.yt-tracker-close:hover {
+.yt-Viewer-close:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.yt-tracker-content {
+.yt-Viewer-content {
   max-height: 380px;
   overflow-y: auto;
   padding: 0;
@@ -79,24 +79,24 @@
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-.yt-tracker-content::-webkit-scrollbar {
+.yt-Viewer-content::-webkit-scrollbar {
   width: 6px;
 }
 
-.yt-tracker-content::-webkit-scrollbar-track {
+.yt-Viewer-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.yt-tracker-content::-webkit-scrollbar-thumb {
+.yt-Viewer-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
 }
 
-.yt-tracker-content::-webkit-scrollbar-thumb:hover {
+.yt-Viewer-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
-.yt-tracker-status {
+.yt-Viewer-status {
   padding: 20px 15px;
   text-align: center;
   color: rgba(255, 255, 255, 0.7);
@@ -104,18 +104,18 @@
   font-size: 13px;
 }
 
-.yt-tracker-comment {
+.yt-Viewer-comment {
   padding: 12px 15px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   transition: background-color 0.2s ease;
   animation: slideIn 0.3s ease-out;
 }
 
-.yt-tracker-comment:hover {
+.yt-Viewer-comment:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.yt-tracker-comment:last-child {
+.yt-Viewer-comment:last-child {
   border-bottom: none;
 }
 
@@ -157,30 +157,30 @@
 }
 
 /* Ensure YouTube's native timestamp links work in our overlay */
-.yt-tracker-comment .yt-core-attributed-string__link,
-.yt-tracker-comment .timestamp-link {
+.yt-Viewer-comment .yt-core-attributed-string__link,
+.yt-Viewer-comment .timestamp-link {
   color: var(--yt-spec-call-to-action, #3ea6ff) !important;
   text-decoration: none;
   cursor: pointer;
 }
 
-.yt-tracker-comment .yt-core-attributed-string__link:hover,
-.yt-tracker-comment .timestamp-link:hover {
+.yt-Viewer-comment .yt-core-attributed-string__link:hover,
+.yt-Viewer-comment .timestamp-link:hover {
   text-decoration: underline;
 }
 
 /* Comment type styling */
-.yt-tracker-comment.user-timestamp {
+.yt-Viewer-comment.user-timestamp {
   border-left: 4px solid #ffd700;
   background: rgba(255, 215, 0, 0.1);
 }
 
-.yt-tracker-comment.user-only {
+.yt-Viewer-comment.user-only {
   border-left: 4px solid #ff6b6b;
   background: rgba(255, 107, 107, 0.1);
 }
 
-.yt-tracker-comment.timestamp-only {
+.yt-Viewer-comment.timestamp-only {
   border-left: 4px solid #4dabf7;
   background: rgba(77, 171, 247, 0.1);
 }
@@ -231,7 +231,7 @@
 }
 
 /* Notification styles */
-.yt-tracker-notification {
+.yt-Viewer-notification {
   position: fixed;
   top: 20px;
   right: 390px;
@@ -259,39 +259,39 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  #yt-comment-tracker-overlay {
+  #yt-comment-Viewer-overlay {
     width: 300px;
     right: 10px;
     top: 10px;
   }
 
-  #yt-comment-tracker-overlay.fullscreen-mode {
+  #yt-comment-Viewer-overlay.fullscreen-mode {
     width: 280px;
     max-height: 350px;
   }
 
-  .yt-tracker-notification {
+  .yt-Viewer-notification {
     right: 320px;
     top: 10px;
   }
 }
 
 @media (max-width: 480px) {
-  #yt-comment-tracker-overlay {
+  #yt-comment-Viewer-overlay {
     width: calc(100vw - 20px);
     right: 10px;
     left: 10px;
     max-height: 400px;
   }
 
-  #yt-comment-tracker-overlay.fullscreen-mode {
+  #yt-comment-Viewer-overlay.fullscreen-mode {
     width: calc(100vw - 80px); /* Leave space for fullscreen button */
     right: 60px;
     left: auto;
     max-height: 300px;
   }
 
-  .yt-tracker-notification {
+  .yt-Viewer-notification {
     right: 20px;
     left: 20px;
     width: auto;
@@ -299,12 +299,12 @@
 }
 
 /* Ensure overlay doesn't interfere with YouTube controls */
-#yt-comment-tracker-overlay * {
+#yt-comment-Viewer-overlay * {
   pointer-events: auto;
 }
 
 /* Fullscreen mode adjustments */
-#yt-comment-tracker-overlay.fullscreen-mode {
+#yt-comment-Viewer-overlay.fullscreen-mode {
   width: 320px; /* Slightly smaller in fullscreen */
   max-height: 400px;
   background: rgba(0, 0, 0, 0.85); /* More opaque in fullscreen */
@@ -312,6 +312,6 @@
 }
 
 /* Adjust overlay position when YouTube theater mode is active */
-.theater #yt-comment-tracker-overlay {
+.theater #yt-comment-Viewer-overlay {
   top: 80px;
 }

@@ -1,4 +1,4 @@
-// YouTube Comment Tracker - Background Service Worker
+// YouTube Comment Viewer - Background Service Worker
 // This handles secure API calls to YouTube Data API
 
 const DEFAULT_YOUTUBE_API_KEY = "YOUR_API_KEY"; // Fallback API key
@@ -247,10 +247,10 @@ function formatRelativeTime(publishedAt) {
 
 // Handle extension installation
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('YouTube Comment Tracker extension installed');
+    console.log('YouTube Comment Viewer extension installed');
 });
 
 // Keep service worker alive
 chrome.runtime.onStartup.addListener(() => {
-    console.log('YouTube Comment Tracker service worker started');
+    console.log('YouTube Comment Viewer service worker started');
 });
