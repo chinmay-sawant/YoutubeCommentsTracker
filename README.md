@@ -1,4 +1,4 @@
-# YouTube User Comment Tracker
+# YouTube User Comment Viewer
 
 A powerful Google Chrome extension that displays live-updating comments from specific users AND/OR comments containing timestamps on YouTube videos in a transparent, draggable overlay with real-time toast notifications.
 
@@ -300,7 +300,7 @@ The extension follows a modern Manifest V3 architecture with three main componen
 1. **Clone the repository:**
    ```bash
    git clone <repository-url>
-   cd youtube-comment-tracker
+   cd youtube-comment-Viewer
    ```
 
 2. **Load the extension in Chrome:**

@@ -35,7 +35,7 @@ class App {
             // Bind global events
             this.bindGlobalEvents();
             
-            console.log('YouTube Comment Tracker website initialized successfully');
+            console.log('YouTube Comment Viewer website initialized successfully');
         } catch (error) {
             console.warn('Non-critical initialization error:', error);
             // Continue execution - don't let minor errors break the site

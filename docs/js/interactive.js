@@ -248,19 +248,19 @@ class InteractiveElements {
             const text = link.textContent.toLowerCase();
             
             if (text.includes('doc') || text.includes('read docs')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/blob/main/README.md';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/blob/main/README.md';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             } else if (text.includes('bug') || text.includes('report bug')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             } else if (text.includes('feature') || text.includes('suggest feature')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues/new?template=feature_request.md';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues/new?template=feature_request.md';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             } else if (text.includes('community') || text.includes('join community')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer';
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
             }
@@ -272,13 +272,13 @@ class InteractiveElements {
             const text = link.textContent.toLowerCase();
             
             if (text.includes('documentation')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/blob/main/README.md';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/blob/main/README.md';
                 link.target = '_blank';
             } else if (text.includes('bug reports')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker/issues';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer/issues';
                 link.target = '_blank';
             } else if (text.includes('github')) {
-                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsTracker';
+                link.href = 'https://github.com/chinmay-sawant/YoutubeCommentsViewer';
                 link.target = '_blank';
             }
         });

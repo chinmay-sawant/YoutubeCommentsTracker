@@ -1,4 +1,4 @@
-// YouTube User Comment Tracker - Content Script with YouTube API Integration
+// YouTube User Comment Viewer - Content Script with YouTube API Integration
 (async () => {
     let targetUsername = '';
     let commentContainer = null;
@@ -35,7 +35,7 @@
                 return;
             }
             
-            console.log('YouTube Comment Tracker initialized for video:', currentVideoId);
+            console.log('YouTube Comment Viewer initialized for video:', currentVideoId);
             
             // Get the target username from storage
             const result = await chrome.storage.sync.get(['targetUsername', 'sortOrder', 'toastTimeout', 'toastTheme', 'toastExtensionTime']);
@@ -66,8 +66,8 @@
             }
             
         } catch (error) {
-            console.error('Failed to initialize comment tracker:', error);
-            updateOverlayStatus('Error initializing tracker: ' + error.message);
+            console.error('Failed to initialize comment Viewer:', error);
+            updateOverlayStatus('Error initializing Viewer: ' + error.message);
         }
     }
     
@@ -629,7 +629,7 @@
                 
                 // Update status based on results
                 setTimeout(() => {
-                    const foundComments = commentContainer.querySelectorAll('.yt-tracker-comment');
+                    const foundComments = commentContainer.querySelectorAll('.yt-Viewer-comment');
                     let statusMessage = '';
                     
                     if (foundComments.length === 0) {
@@ -844,7 +844,7 @@
                 updateLoadMoreButton();
                 
                 // Remove status message if it exists
-                const statusDiv = commentContainer.querySelector('.yt-tracker-status');
+                const statusDiv = commentContainer.querySelector('.yt-Viewer-status');
                 if (statusDiv && statusDiv.textContent.includes('Loading')) {
                     statusDiv.remove();
                 }
@@ -869,7 +869,7 @@
     function updateLoadMoreButton() {
         if (!commentContainer) return;
         
-        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        const contentDiv = commentContainer.querySelector('.yt-Viewer-content');
         let loadMoreBtn = contentDiv.querySelector('.load-more-btn');
         
         if (nextPageToken) {
@@ -894,12 +894,12 @@
     function updateOverlayStatus(message) {
         if (!commentContainer) return;
         
-        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        const contentDiv = commentContainer.querySelector('.yt-Viewer-content');
         if (contentDiv) {
-            let statusDiv = contentDiv.querySelector('.yt-tracker-status');
+            let statusDiv = contentDiv.querySelector('.yt-Viewer-status');
             if (!statusDiv) {
                 statusDiv = document.createElement('div');
-                statusDiv.className = 'yt-tracker-status';
+                statusDiv.className = 'yt-Viewer-status';
                 contentDiv.insertBefore(statusDiv, contentDiv.firstChild);
             }
             statusDiv.textContent = message;
@@ -909,20 +909,20 @@
     // Create the transparent overlay container
     function createCommentOverlay() {
         // Remove existing container if it exists
-        const existing = document.getElementById('yt-comment-tracker-overlay');
+        const existing = document.getElementById('yt-comment-Viewer-overlay');
         if (existing) {
             existing.remove();
         }
         
         commentContainer = document.createElement('div');
-        commentContainer.id = 'yt-comment-tracker-overlay';
+        commentContainer.id = 'yt-comment-Viewer-overlay';
         commentContainer.innerHTML = `
-            <div class="yt-tracker-header">
-                <span class="yt-tracker-title">${targetUsername ? `Tracking: ${targetUsername}` : 'Comment Tracker'}</span>
-                <button class="yt-tracker-close" title="Close tracker">×</button>
+            <div class="yt-Viewer-header">
+                <span class="yt-Viewer-title">${targetUsername ? `Tracking: ${targetUsername}` : 'Comment Viewer'}</span>
+                <button class="yt-Viewer-close" title="Close Viewer">×</button>
             </div>
-            <div class="yt-tracker-content">
-                <div class="yt-tracker-status">Loading comments...</div>
+            <div class="yt-Viewer-content">
+                <div class="yt-Viewer-status">Loading comments...</div>
             </div>
         `;
         
@@ -932,7 +932,7 @@
         document.body.appendChild(commentContainer);
         
         // Add close button functionality
-        const closeBtn = commentContainer.querySelector('.yt-tracker-close');
+        const closeBtn = commentContainer.querySelector('.yt-Viewer-close');
         closeBtn.addEventListener('click', () => {
             commentContainer.style.display = 'none';
         });
@@ -986,11 +986,11 @@
     function clearComments() {
         if (!commentContainer) return;
         
-        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        const contentDiv = commentContainer.querySelector('.yt-Viewer-content');
         if (!contentDiv) return;
         
         // Remove all comment elements
-        const commentElements = contentDiv.querySelectorAll('.yt-tracker-comment');
+        const commentElements = contentDiv.querySelectorAll('.yt-Viewer-comment');
         commentElements.forEach(el => el.remove());
         
         // Remove load more button
@@ -1094,7 +1094,7 @@
         let xOffset = 0;
         let yOffset = 0;
         
-        const header = element.querySelector('.yt-tracker-header');
+        const header = element.querySelector('.yt-Viewer-header');
         
         // Add visual feedback for drag state
         header.style.cursor = 'grab';
@@ -1179,7 +1179,7 @@
     function addScrollBasedLoading() {
         if (!commentContainer) return;
         
-        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        const contentDiv = commentContainer.querySelector('.yt-Viewer-content');
         if (!contentDiv) return;
         
         contentDiv.addEventListener('scroll', () => {
@@ -1220,13 +1220,13 @@
             return;
         }
         
-        const contentDiv = commentContainer.querySelector('.yt-tracker-content');
+        const contentDiv = commentContainer.querySelector('.yt-Viewer-content');
         if (!contentDiv) {
             console.error('Content div not found!');
             return;
         }
         
-        const statusDiv = contentDiv.querySelector('.yt-tracker-status');
+        const statusDiv = contentDiv.querySelector('.yt-Viewer-status');
         
         // Remove status message on first comment
         if (statusDiv && (statusDiv.textContent.includes('Loading') || statusDiv.textContent.includes('Processing'))) {
@@ -1251,7 +1251,7 @@
         
         // Create comment element
         const commentElement = document.createElement('div');
-        commentElement.className = `yt-tracker-comment ${commentType}`;
+        commentElement.className = `yt-Viewer-comment ${commentType}`;
         commentElement.innerHTML = `
             <div class="yt-comment-header">
                 <span class="yt-comment-author">${escapeHtml(commentData.username)}</span>
@@ -1277,7 +1277,7 @@
             contentDiv.appendChild(commentElement);
         }
         
-        console.log('Comment element added to overlay. Current comment count:', contentDiv.querySelectorAll('.yt-tracker-comment').length);
+        console.log('Comment element added to overlay. Current comment count:', contentDiv.querySelectorAll('.yt-Viewer-comment').length);
         
         // Add click handlers for timestamp links
         const timestampLinks = commentElement.querySelectorAll('.timestamp-link');
@@ -1353,7 +1353,7 @@
     // Show notification
     function showNotification(message) {
         const notification = document.createElement('div');
-        notification.className = 'yt-tracker-notification';
+        notification.className = 'yt-Viewer-notification';
         notification.textContent = message;
         document.body.appendChild(notification);
         
@@ -1385,7 +1385,7 @@
             console.log('Username changed from', oldUsername, 'to', targetUsername);
             
             if (commentContainer) {
-                const title = commentContainer.querySelector('.yt-tracker-title');
+                const title = commentContainer.querySelector('.yt-Viewer-title');
                 if (title) {
                     title.textContent = targetUsername ? 
                         `Tracking: ${targetUsername}` : 
@@ -1393,8 +1393,8 @@
                 }
                 
                 // Clear existing comments and restart
-                const contentDiv = commentContainer.querySelector('.yt-tracker-content');
-                contentDiv.innerHTML = '<div class="yt-tracker-status">Reloading comments...</div>';
+                const contentDiv = commentContainer.querySelector('.yt-Viewer-content');
+                contentDiv.innerHTML = '<div class="yt-Viewer-status">Reloading comments...</div>';
                 
                 // Re-load comments with new settings
                 setTimeout(() => {
@@ -1452,9 +1452,9 @@
             
             // Update overlay title
             if (commentContainer) {
-                const titleSpan = commentContainer.querySelector('.yt-tracker-title');
+                const titleSpan = commentContainer.querySelector('.yt-Viewer-title');
                 if (titleSpan) {
-                    titleSpan.textContent = targetUsername ? `Tracking: ${targetUsername}` : 'Comment Tracker';
+                    titleSpan.textContent = targetUsername ? `Tracking: ${targetUsername}` : 'Comment Viewer';
                 }
                 
                 // If sort order changed, reload comments

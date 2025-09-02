@@ -1,4 +1,4 @@
-// YouTube Comment Tracker - Showcase Website JavaScript
+// YouTube Comment Viewer - Showcase Website JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all components
